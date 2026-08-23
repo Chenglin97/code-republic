@@ -1,8 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { decideAction, nextDemoDrafts, WorldRuleError } from "./actions";
+import { WorldAuthority } from "./authority";
+import { planAgentJoin } from "./join";
+import { StorageVersionConflict, validateEventLog, type WorldEventStorage } from "./persistence";
 import { projectWorld } from "./reducer";
 import { createSeedEvents } from "./seed";
 import type { EventDraft, WorldAction, WorldEvent, WorldSnapshot } from "./types";
+
+class MemoryStorage implements WorldEventStorage {
+  private events: WorldEvent[] | null = null;
+
+  async read(): Promise<WorldEvent[] | null> {
+    return this.events ? structuredClone(this.events) : null;
+  }
+
+  async append(_worldId: string, expectedVersion: number, events: WorldEvent[]): Promise<void> {
+    const current = this.events ?? [];
+    const currentVersion = current.at(-1)?.version ?? 0;
+    if (currentVersion !== expectedVersion) throw new StorageVersionConflict(expectedVersion, currentVersion);
+    this.events = structuredClone([...current, ...events]);
+  }
+
+  async replace(_worldId: string, events: WorldEvent[]): Promise<void> {
+    this.events = structuredClone(events);
+  }
+}
 
 function append(snapshotEvents: WorldEvent[], drafts: EventDraft[]): WorldEvent[] {
   const base = snapshotEvents.at(-1)?.version ?? 0;
@@ -43,6 +65,7 @@ describe("World projection", () => {
     expect(snapshot.missions.every((mission) => mission.status === "accepted")).toBe(true);
     expect(snapshot.campaign?.victoryConditions.every((condition) => condition.status === "passed")).toBe(true);
     expect(snapshot.contributionShares.reduce((sum, item) => sum + item.share, 0)).toBe(100);
+    expect(snapshot.contributionShares.find((item) => item.agentId === "agt_daniel")?.share).toBeGreaterThan(0);
   });
 });
 
@@ -78,5 +101,118 @@ describe("World rules", () => {
       payload: { finding: "No issues" },
     };
     expect(() => decideAction(snapshot, action)).toThrowError(/cannot review their own/);
+  });
+
+  it("requires an Agent to join the Crew before claiming a Mission", () => {
+    let events = createSeedEvents();
+    events = append(events, nextDemoDrafts(projectWorld(events)));
+    events = append(events, nextDemoDrafts(projectWorld(events)));
+    const snapshot = projectWorld(events);
+    expect(() => decideAction(snapshot, {
+      type: "mission.claim",
+      actorAgentId: "agt_sofia",
+      targetId: "msn_contract",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "test:not-in-crew",
+      summary: "Sofia attempts to claim the adapter Mission.",
+    })).toThrowError(/join the Crew/);
+  });
+});
+
+describe("World authority", () => {
+  it("returns the original result for an idempotent retry", async () => {
+    const authority = new WorldAuthority(new MemoryStorage());
+    const snapshot = await authority.getSnapshot("demo");
+    const action: WorldAction = {
+      type: "agent.introduce",
+      actorAgentId: "agt_tony",
+      targetId: "agt_tony",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "test:introduce:tony",
+      summary: "Tony offers TypeScript contract implementation.",
+    };
+    const first = await authority.submitAction("demo", action);
+    const retry = await authority.submitAction("demo", action);
+    expect(first.duplicate).toBe(false);
+    expect(retry.duplicate).toBe(true);
+    expect(retry.eventIds).toEqual(first.eventIds);
+    expect(retry.worldVersion).toBe(first.worldVersion);
+  });
+
+  it("rejects reuse of one idempotency key for a different request", async () => {
+    const authority = new WorldAuthority(new MemoryStorage());
+    const snapshot = await authority.getSnapshot("demo");
+    const action: WorldAction = {
+      type: "agent.introduce",
+      actorAgentId: "agt_tony",
+      targetId: "agt_tony",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "test:reused:key",
+      summary: "Tony offers TypeScript contract implementation.",
+    };
+    await authority.submitAction("demo", action);
+    await expect(authority.submitAction("demo", { ...action, summary: "Tony changes the request body." }))
+      .rejects.toMatchObject({ code: "IDEMPOTENCY_KEY_REUSED", status: 409 });
+  });
+
+  it("atomically gives one of two racing claimants the Mission", async () => {
+    const authority = new WorldAuthority(new MemoryStorage());
+    let snapshot = await authority.getSnapshot("demo");
+    await authority.appendDrafts("demo", nextDemoDrafts(snapshot), { expectedWorldVersion: snapshot.world.version });
+    snapshot = await authority.getSnapshot("demo");
+    await authority.appendDrafts("demo", nextDemoDrafts(snapshot), { expectedWorldVersion: snapshot.world.version });
+    snapshot = await authority.getSnapshot("demo");
+    const makeClaim = (actorAgentId: string, key: string): WorldAction => ({
+      type: "mission.claim",
+      actorAgentId,
+      targetId: "msn_contract",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: key,
+      summary: `${actorAgentId} claims the available contract Mission.`,
+    });
+
+    const results = await Promise.allSettled([
+      authority.submitAction("demo", makeClaim("agt_tony", "race:tony")),
+      authority.submitAction("demo", makeClaim("agt_maya", "race:maya")),
+    ]);
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    const rejected = results.find((result): result is PromiseRejectedResult => result.status === "rejected");
+    expect(rejected?.reason).toMatchObject({ code: "WORLD_VERSION_CONFLICT", status: 409 });
+    const after = await authority.getSnapshot("demo");
+    expect(after.missions.find((mission) => mission.id === "msn_contract")?.ownerAgentId)
+      .toMatch(/^agt_(tony|maya)$/);
+  });
+
+  it("resets the event log to the deterministic seed", async () => {
+    const authority = new WorldAuthority(new MemoryStorage());
+    const before = await authority.getSnapshot("demo");
+    await authority.appendDrafts("demo", nextDemoDrafts(before));
+    const reset = await authority.resetWorld("demo");
+    expect(reset.world.version).toBe(createSeedEvents().length);
+    expect(reset.campaign).toBeNull();
+    expect(reset.proposals).toHaveLength(2);
+  });
+
+  it("rejects unsupported Worlds and malformed event sequences", async () => {
+    const authority = new WorldAuthority(new MemoryStorage());
+    await expect(authority.getSnapshot("other")).rejects.toMatchObject({ code: "WORLD_NOT_FOUND", status: 404 });
+    const corrupt = createSeedEvents();
+    corrupt[1] = { ...corrupt[1]!, version: 8 };
+    expect(() => validateEventLog("demo", corrupt)).toThrow(/expected 2/);
+  });
+});
+
+describe("Agent join", () => {
+  it("creates a stable identity on retries without fabricating a review", () => {
+    const input = {
+      displayName: "Judge Nova",
+      capabilities: ["Code Review"],
+      idempotencyKey: "judge:nova:join",
+    };
+    const first = planAgentJoin("demo", input);
+    const retry = planAgentJoin("demo", input);
+    expect(retry.agent.id).toBe(first.agent.id);
+    expect(first.drafts.map((draft) => draft.type)).toEqual(["agent.joined", "agent.introduced"]);
+    expect(first.drafts.some((draft) => draft.type === "release.reviewed")).toBe(false);
   });
 });

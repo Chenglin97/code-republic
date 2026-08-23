@@ -109,6 +109,7 @@ export interface WorldEvent<TPayload = Record<string, unknown>> {
   tone: EventTone;
   payload: TPayload;
   idempotencyKey?: string;
+  idempotencyFingerprint?: string;
   causationEventId?: string;
 }
 

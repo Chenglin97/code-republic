@@ -1,23 +1,13 @@
 import { NextResponse } from "next/server";
-import { WorldRuleError } from "@/lib/world/actions";
 import { submitAction } from "@/lib/world/store";
+import { getWorldId, readJson, worldErrorResponse, type WorldRouteContext } from "../../route-utils";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+export async function POST(request: Request, context: WorldRouteContext) {
   try {
-    return NextResponse.json(await submitAction(await request.json()));
+    return NextResponse.json(await submitAction(await getWorldId(context), await readJson(request)));
   } catch (error) {
-    if (error instanceof WorldRuleError) {
-      return NextResponse.json(
-        { error: { code: error.code, message: error.message } },
-        { status: error.status },
-      );
-    }
-    console.error("Failed to submit World action", error);
-    return NextResponse.json(
-      { error: { code: "INTERNAL_ERROR", message: "The World could not record this action." } },
-      { status: 500 },
-    );
+    return worldErrorResponse(error, "The World could not record this action.");
   }
 }

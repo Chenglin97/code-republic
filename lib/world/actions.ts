@@ -6,8 +6,10 @@ export class WorldRuleError extends Error {
     public readonly code: string,
     message: string,
     public readonly status = 400,
+    public readonly details: Record<string, unknown> = {},
   ) {
     super(message);
+    this.name = "WorldRuleError";
   }
 }
 
@@ -51,6 +53,9 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
       if (snapshot.campaign) throw new WorldRuleError("CAMPAIGN_ALREADY_RATIFIED", "Selection has already closed.", 409);
       const proposal = snapshot.proposals.find((candidate) => candidate.id === action.targetId);
       if (!proposal) throw new WorldRuleError("PROPOSAL_NOT_FOUND", "The proposal does not exist.", 404);
+      if (proposal.authorAgentId === action.actorAgentId) {
+        throw new WorldRuleError("SELF_ENDORSEMENT_FORBIDDEN", "An Agent cannot endorse its own proposal.", 403);
+      }
       if (proposal.endorsements.includes(action.actorAgentId)) {
         throw new WorldRuleError("DUPLICATE_ENDORSEMENT", "This Agent has already endorsed the proposal.", 409);
       }
@@ -65,7 +70,7 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
       }];
     }
     case "crew.join": {
-      if (!snapshot.campaign || snapshot.campaign.id !== action.targetId) {
+      if (!snapshot.campaign || snapshot.campaign.id !== action.targetId || snapshot.campaign.status !== "active") {
         throw new WorldRuleError("CAMPAIGN_NOT_ACTIVE", "An Agent can only join an active Campaign.", 409);
       }
       if (snapshot.campaign.crewAgentIds.includes(action.actorAgentId)) {
@@ -83,6 +88,9 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
     }
     case "mission.claim": {
       const mission = requireMission(snapshot, action.targetId);
+      if (!snapshot.campaign?.crewAgentIds.includes(action.actorAgentId)) {
+        throw new WorldRuleError("NOT_IN_CREW", "An Agent must voluntarily join the Crew before claiming a Mission.", 403);
+      }
       const unmet = mission.dependsOn.filter(
         (dependencyId) => !snapshot.missions.some((candidate) => candidate.id === dependencyId && candidate.status === "accepted"),
       );
@@ -105,6 +113,9 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
         throw new WorldRuleError("SELF_EVALUATION_FORBIDDEN", "A builder cannot review their own Contribution.", 403);
       }
       if (!mission.contributionCommit) throw new WorldRuleError("EVIDENCE_REQUIRED", "There is no submitted Contribution to review.", 409);
+      if (mission.status !== "submitted") {
+        throw new WorldRuleError("MISSION_NOT_REVIEWABLE", "Only a submitted Contribution can enter review.", 409);
+      }
       const finding = String(action.payload?.finding ?? action.summary);
       return [{
         type: "review.finding",
@@ -122,6 +133,15 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
         throw new WorldRuleError("SELF_EVALUATION_FORBIDDEN", "A builder cannot evaluate their own Contribution.", 403);
       }
       if (!mission.contributionCommit) throw new WorldRuleError("EVIDENCE_REQUIRED", "A commit is required before evaluation.", 409);
+      if (mission.status !== "submitted") {
+        throw new WorldRuleError("MISSION_NOT_EVALUATABLE", "Only a submitted Contribution can be accepted.", 409);
+      }
+      const unmet = mission.dependsOn.filter(
+        (dependencyId) => !snapshot.missions.some((candidate) => candidate.id === dependencyId && candidate.status === "accepted"),
+      );
+      if (unmet.length > 0) {
+        throw new WorldRuleError("MISSION_UNAVAILABLE", "A Mission cannot be accepted before its dependencies.", 409);
+      }
       return [{
         type: "mission.accepted",
         actorAgentId: action.actorAgentId,
@@ -169,7 +189,7 @@ export function nextDemoDrafts(snapshot: WorldSnapshot): EventDraft[] {
       { id: "msn_release", title: "Run clean-checkout verifier", capability: "Release", status: "blocked", dependsOn: ["msn_integration"] },
     ];
     return [
-      ...["agt_tony", "agt_maya", "agt_charlie", "agt_nina"].map<EventDraft>((agentId) => ({
+      ...["agt_tony", "agt_maya", "agt_charlie", "agt_daniel", "agt_nina"].map<EventDraft>((agentId) => ({
         type: "crew.joined",
         actorAgentId: agentId,
         targetId: snapshot.campaign!.id,
@@ -219,8 +239,12 @@ export function nextDemoDrafts(snapshot: WorldSnapshot): EventDraft[] {
     return [
       { type: "mission.accepted", actorAgentId: "agt_charlie", targetId: "msn_contract", summary: "Charlie accepted the repaired adapter after independent re-review.", tone: "success", payload: { verifier: "review" } },
       { type: "mission.accepted", actorAgentId: "agt_charlie", targetId: "msn_tests", summary: "Charlie accepted Maya’s contract tests with all three failures reproduced before the fix.", tone: "success", payload: { verifier: "review" } },
-      { type: "mission.accepted", actorAgentId: "agt_nina", targetId: "msn_integration", summary: "Nina ran the integration suite against the merged Contributions: 18 of 18 passed.", tone: "success", payload: { verifier: "npm test -- integration", exitCode: 0 } },
-      { type: "mission.accepted", actorAgentId: "agt_nina", targetId: "msn_release", summary: "Nina’s clean-checkout verifier passed every ratified victory condition.", tone: "success", payload: { verifier: "npm test && npm run build", exitCode: 0 } },
+      { type: "mission.claimed", actorAgentId: "agt_daniel", targetId: "msn_integration", summary: "Daniel claimed the now-unblocked integration Mission.", tone: "active", payload: {} },
+      { type: "contribution.submitted", actorAgentId: "agt_daniel", targetId: "msn_integration", summary: "Daniel submitted the integrated adapter and contract suite in commit b18e490.", tone: "info", payload: { commit: "b18e490" } },
+      { type: "mission.accepted", actorAgentId: "agt_nina", targetId: "msn_integration", summary: "Nina independently ran the integration suite: 18 of 18 passed.", tone: "success", payload: { verifier: "npm test -- integration", exitCode: 0 } },
+      { type: "mission.claimed", actorAgentId: "agt_nina", targetId: "msn_release", summary: "Nina claimed the now-unblocked clean-checkout verification Mission.", tone: "active", payload: {} },
+      { type: "contribution.submitted", actorAgentId: "agt_nina", targetId: "msn_release", summary: "Nina submitted the clean-checkout verification record in commit e87cc21.", tone: "info", payload: { commit: "e87cc21" } },
+      { type: "mission.accepted", actorAgentId: "agt_charlie", targetId: "msn_release", summary: "Charlie independently confirmed Nina’s verifier passed every ratified victory condition.", tone: "success", payload: { verifier: "npm test && npm run build", exitCode: 0 } },
       {
         type: "campaign.completed",
         actorAgentId: "agt_nina",
@@ -229,11 +253,12 @@ export function nextDemoDrafts(snapshot: WorldSnapshot): EventDraft[] {
         tone: "success",
         payload: {
           shares: [
-            { agentId: "agt_tony", share: 32, basis: "Adapter implementation and routed repair" },
-            { agentId: "agt_maya", share: 24, basis: "Discovery evidence and contract tests" },
-            { agentId: "agt_sofia", share: 16, basis: "Selected architecture and dependency design" },
-            { agentId: "agt_charlie", share: 16, basis: "Confirmed finding and independent review" },
-            { agentId: "agt_nina", share: 12, basis: "Reproduction and clean-checkout verification" },
+            { agentId: "agt_tony", share: 28, basis: "Adapter implementation and routed repair" },
+            { agentId: "agt_maya", share: 22, basis: "Discovery evidence and contract tests" },
+            { agentId: "agt_sofia", share: 14, basis: "Selected architecture and dependency design" },
+            { agentId: "agt_charlie", share: 14, basis: "Confirmed finding and independent reviews" },
+            { agentId: "agt_daniel", share: 12, basis: "Integrated the accepted adapter and test Contributions" },
+            { agentId: "agt_nina", share: 10, basis: "Reproduction, integration evaluation, and clean-checkout verification" },
           ],
         },
       },
