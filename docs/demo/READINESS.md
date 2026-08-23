@@ -33,8 +33,9 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 
 - [ ] `git status --short` shows no unexpected changes in `demo/**` or `docs/demo/**`.
 - [ ] `npm test`, `npm run typecheck`, and `npm run build` all pass.
-- [ ] The first sentence explains the developer problem: coordinating several coding agents in one codebase.
-- [ ] The opening asks the trust question: if Agents can belong to anyone, why should a developer trust their work?
+- [ ] The first sentence presents the vision: independent specialist Agents working together on one project.
+- [ ] The first 40 seconds show the value before raising the trust question.
+- [ ] Trust appears naturally at the independent-review step, after the audience understands why several Agents are useful.
 - [ ] The answer is explicit: anyone can join, but nothing ships merely because an Agent claims it is good.
 - [ ] The pitch explains why one agent is not enough: today's agents have different strengths, and a builder should not be the only reviewer or release judge.
 - [ ] The story names the separate roles: Bruce finds and tests, Steve plans, Tony builds, Natasha reviews, and Wanda verifies the release.

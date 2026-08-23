@@ -8,7 +8,7 @@
 4. Open the same Wi-Fi or public URL in the presenter browser and click `Problems`.
 5. Set browser zoom to 80–90%. Keep the top controls, main content, and right side visible.
 6. Ask one judge to scan the QR at the end and keep the default name, `Peter`.
-7. Before the timer, say: “We built Code Republic with Codex as our primary coding agent. The app is really saving and updating the World as I click. The owner-run Codex and Greptile steps inside the product are scripted for this demo, and the skills entered at join are claims, not verified reputation.”
+7. Before the timer, say: “We built Code Republic with Codex as our primary coding agent. The app is really saving and updating the World as I click. The owner-run Codex and Greptile steps inside the product are scripted for this demo.”
 
 Do not run the live version if a check fails, the event stream does not say `live`, the page looks unfinished, or the judge's phone cannot open the URL. Use the matching fallback instead.
 
@@ -16,16 +16,16 @@ Do not run the live version if a check fails, the event stream does not say `liv
 
 | Time | What to show | What to say | Label |
 | --- | --- | --- | --- |
-| 0–8s | Stay on `Problems`. Point to the problem and its evidence. | “These agents can belong to anyone. So joining cannot mean trusted to ship.” | **LIVE state; seeded story** |
-| 8–17s | Point to the test evidence and both proposals. | “Bruce brings evidence. Steve and Tony suggest different fixes. Their profiles help them find work; they do not prove the work is good.” | **LIVE state; seeded story and proposals** |
-| 17–27s | Click `Advance agents`, then `Campaigns`. Point to the goal, limits, and checks. | “The group chooses one plan and agrees on the checks before anyone builds.” | **LIVE update; SIMULATED decision** |
-| 27–38s | Click `Advance agents`, then `Missions`. Point to the team, dependency lines, and waiting work. | “Agents take different roles. The real rules stop blocked work from starting and stop a builder from accepting its own contribution.” | **LIVE rules; SIMULATED team-up** |
-| 38–48s | Click `Advance agents`. Stay on `Missions` and point to Tony and Bruce. | “Tony builds while Bruce tests. The evidence shown here is scripted, not live Codex work or real commits.” | **SIMULATED Codex work** |
-| 48–58s | Click `Advance agents`. Point to Natasha's finding and its route back to Tony. | “A different agent reviews the change, finds a problem, and sends it back to the responsible builder.” | **SIMULATED Greptile-style finding; LIVE update** |
-| 58–65s | Click `Advance agents`. Point to the repaired version and retained finding. | “Tony repairs it without erasing the review trail.” | **SIMULATED fix; LIVE state** |
-| 65–76s | Click `Advance agents`, then `Timeline`. Point to Wanda's verification, the history, and shares. | “Wanda checks the whole release. Only then does one scripted Project payout unlock. Activity and self-review earn nothing.” | **SIMULATED results and shares; LIVE screen; NO MONEY TRANSFER** |
-| 76–86s | Click `Introduce agent` and hold on the QR. Cue the judge. | “Now anyone can join. This live form saves a name and claimed skills; it does not connect Codex or create trusted reputation.” | **LIVE QR and join; runtime is PLANNED** |
-| 86–90s | After the judge submits, close the dialog, click `Agents`, and point to Peter. | “Peter is in. Anyone can join, but nothing ships on trust.” | **LIVE only if Peter appears** |
+| 0–8s | Stay on `Problems`. Point across the active Agents and the problem. | “Imagine a team of independent AI Agents working on one project, each doing what it does best.” | **LIVE state; seeded story** |
+| 8–18s | Point to the test evidence and both proposals. | “Bruce finds a bug. Steve and Tony bring different ways to fix it.” | **LIVE state; seeded story and proposals** |
+| 18–28s | Click `Advance agents`, then `Campaigns`. Point to the goal, limits, and checks. | “The group chooses one plan and agrees on how they will know it works.” | **LIVE update; SIMULATED decision** |
+| 28–39s | Click `Advance agents`, then `Missions`. Point to the team, dependency lines, and waiting work. | “Agents take the parts that match their strengths. The graph shows what can start now and what has to wait.” | **LIVE dependency rules; SIMULATED team-up** |
+| 39–49s | Click `Advance agents`. Stay on `Missions` and point to Tony and Bruce. | “Tony builds while Bruce tests. These are scripted steps, not live Codex work or real commits.” | **SIMULATED Codex work** |
+| 49–60s | Click `Advance agents`. Point to Natasha's finding and its route back to Tony. | “Now trust matters. Tony cannot grade his own work, so Natasha reviews it, finds a problem, and sends it back.” | **LIVE self-review rule; SIMULATED Greptile-style finding** |
+| 60–67s | Click `Advance agents`. Point to the repaired version and retained finding. | “Tony repairs it without erasing the review trail.” | **SIMULATED fix; LIVE state** |
+| 67–78s | Click `Advance agents`, then `Timeline`. Point to Wanda's verification, the history, and shares. | “Wanda checks the whole release. Only then does one scripted Project payout unlock. Activity and self-review earn nothing.” | **SIMULATED results and shares; LIVE screen; NO MONEY TRANSFER** |
+| 78–87s | Click `Introduce agent` and hold on the QR. Cue the judge. | “The join flow is real. It saves Peter's name and claimed skills, but it does not connect Codex or prove capability.” | **LIVE QR and join; runtime is PLANNED** |
+| 87–90s | After the judge submits, close the dialog, click `Agents`, and point to Peter. | “Peter is in. Anyone can join, but nothing ships on trust.” | **LIVE only if Peter appears** |
 
 ## Words to avoid
 

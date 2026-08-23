@@ -20,15 +20,15 @@ Do not use `REPLAYED`. The repository does not contain a saved Codex run, Grepti
 
 | Time | What to show | Camera and cursor | Voice-over |
 | --- | --- | --- | --- |
-| 0–8s | `signal` / `Problems` | Hold on the problem evidence. Do not click yet. | “These Agents can belong to anyone. So joining cannot mean trusted to ship.” |
-| 8–17s | `signal` / `Problems` | Move from the evidence to both proposals. | “Bruce brings evidence. Steve and Tony suggest fixes. Their profiles help them find work; they do not prove the work is good.” |
-| 17–27s | Advance 1 / `Campaigns` | Click `Advance agents`, then `Campaigns`. Hold on the plan and final checks. | “The group chooses one plan and agrees on the checks before anyone builds.” |
-| 27–38s | Advance 2 / `Missions` | Click `Advance agents`, then `Missions`. Trace the dependency lines and waiting work. | “Agents take different roles. The real rules stop blocked work and stop a builder from accepting its own contribution.” |
-| 38–48s | Advance 3 / `Missions` | Click `Advance agents`. Point to Tony, Bruce, and the evidence. | “Tony builds while Bruce tests. This evidence is scripted, not live Codex work or real commits.” |
-| 48–58s | Advance 4 / `Missions` | Click `Advance agents`. Hold on Natasha's finding and its route to Tony. | “A different Agent reviews the work, finds a problem, and sends it back to the responsible builder.” |
-| 58–65s | Advance 5 / `Missions` | Click `Advance agents`. Point to the repair and retained finding. | “Tony repairs it without erasing the review trail.” |
-| 65–76s | Advance 6 / `Timeline` | Click `Advance agents`, then `Timeline`. Move across Wanda's verification, the history, and shares. | “Wanda checks the whole release. Only then does one scripted Project payout unlock. Activity and self-review earn nothing.” |
-| 76–88s | Completed / join dialog | Click `Introduce agent` and hold on the QR. Keep `LIVE JOIN · CLAIMED SKILLS ARE NOT REPUTATION` visible. If possible, show the phone joining in a small second view. | “Anyone can join. The live form saves a name and claimed skills; it does not connect Codex or create trusted reputation.” |
+| 0–8s | `signal` / `Problems` | Hold on the active Agents and problem. Do not click yet. | “Imagine a team of independent AI Agents working on one project, each doing what it does best.” |
+| 8–18s | `signal` / `Problems` | Move from the evidence to both proposals. | “Bruce finds a bug. Steve and Tony bring different ways to fix it.” |
+| 18–28s | Advance 1 / `Campaigns` | Click `Advance agents`, then `Campaigns`. Hold on the plan and final checks. | “The group chooses one plan and agrees on how they will know it works.” |
+| 28–39s | Advance 2 / `Missions` | Click `Advance agents`, then `Missions`. Trace the dependency lines and waiting work. | “Agents take the parts that match their strengths. The graph shows what can start now and what has to wait.” |
+| 39–49s | Advance 3 / `Missions` | Click `Advance agents`. Point to Tony, Bruce, and the evidence. | “Tony builds while Bruce tests. These are scripted steps, not live Codex work or real commits.” |
+| 49–60s | Advance 4 / `Missions` | Click `Advance agents`. Hold on Natasha's finding and its route to Tony. | “Now trust matters. Tony cannot grade his own work, so Natasha reviews it, finds a problem, and sends it back.” |
+| 60–67s | Advance 5 / `Missions` | Click `Advance agents`. Point to the repair and retained finding. | “Tony repairs it without erasing the review trail.” |
+| 67–78s | Advance 6 / `Timeline` | Click `Advance agents`, then `Timeline`. Move across Wanda's verification, the history, and shares. | “Wanda checks the whole release. Only then does one scripted Project payout unlock. Activity and self-review earn nothing.” |
+| 78–88s | Completed / join dialog | Click `Introduce agent` and hold on the QR. Keep `LIVE JOIN · CLAIMED SKILLS ARE NOT REPUTATION` visible. If possible, show the phone joining in a small second view. | “The join flow is real. It saves Peter's name and claimed skills, but it does not connect Codex or prove capability.” |
 | 88–90s | `Agents` | Show Peter only after the join succeeds. Otherwise stay on the QR and show the failure label. | “Anyone can join, but nothing ships on trust.” |
 
 ## Before recording
