@@ -28,8 +28,8 @@ jobs:
         shell: bash
         run: |
           subject="$(git log -1 --pretty=%s)"
-          if [[ ! "$subject" =~ ^\[EPIC-(CORE|UI|A2A|CI)\][[:space:]] ]]; then
-            echo "Commit subject must begin with [EPIC-CORE], [EPIC-UI], [EPIC-A2A], or [EPIC-CI]."
+          if [[ ! "$subject" =~ ^\[EPIC-(CORE|UI|A2A|DEMO|CI)\][[:space:]] ]]; then
+            echo "Commit subject must begin with [EPIC-CORE], [EPIC-UI], [EPIC-A2A], [EPIC-DEMO], or [EPIC-CI]."
             exit 1
           fi
 

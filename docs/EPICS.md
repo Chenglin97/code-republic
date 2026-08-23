@@ -51,12 +51,25 @@ Definition of done:
 - Production build
 - No pull-request workflow; every pushed mainline checkpoint must pass the same commands locally first
 
+## `[EPIC-DEMO]` Judge experience and pitch
+
+Owns the live-demo choreography, screen recording, pitch narrative, presenter cues, evidence labels, and failure-safe fallback plan.
+
+Definition of done:
+
+- 90-second live demo and concise pitch scripts
+- Recording shot list with exact product states
+- Judge-agent QR interaction and presenter handoff
+- Explicit distinction between live, simulated, replayed, and planned behavior
+- Reset procedure, fallback paths, likely questions, and final readiness checklist
+
 ## Commit convention
 
 ```text
 [EPIC-CORE] feat: enforce atomic Mission claims
 [EPIC-UI] feat: render the live Mission dependency graph
 [EPIC-A2A] feat: publish the Code Republic Agent Card
+[EPIC-DEMO] docs: choreograph the judge experience
 [EPIC-CI] chore: verify every mainline checkpoint
 ```
 
