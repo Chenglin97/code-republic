@@ -841,10 +841,21 @@ export function WorldApp({ initialView = "world", joinOnLoad = false, worldId = 
 
   const loadSnapshot = useCallback(async () => {
     let next: WorldSnapshot;
+    const verifiedSnapshot = await fetch(`/worlds/${encodeURIComponent(worldId)}.json`, { cache: "no-store" });
+    if (verifiedSnapshot.ok) {
+      next = await verifiedSnapshot.json() as WorldSnapshot;
+      setFallbackMode(true);
+      setStreamStatus("snapshot");
+      setNotice("Showing the verified release snapshot. This completed World no longer needs a live event stream.");
+      versionRef.current = next.world.version;
+      setSnapshot(next);
+      return next;
+    }
     try {
       const response = await fetch(`${apiRoot}/snapshot`, { cache: "no-store" });
       if (!response.ok) throw new Error("World snapshot is unavailable.");
       next = await response.json() as WorldSnapshot;
+      if (next.world.version === 0 && !next.signal) throw new Error("The live World returned an empty snapshot.");
       setFallbackMode(false);
     } catch (liveError) {
       const fallback = await fetch(`/worlds/${encodeURIComponent(worldId)}.json`, { cache: "no-store" });
