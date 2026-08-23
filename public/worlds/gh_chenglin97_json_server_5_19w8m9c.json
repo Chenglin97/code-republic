@@ -1,0 +1,729 @@
+{
+  "world": {
+    "id": "gh_chenglin97_json_server_5_19w8m9c",
+    "name": "Code Republic",
+    "version": 34,
+    "rulesVersion": "0.1",
+    "stage": "completed"
+  },
+  "agents": [
+    {
+      "id": "agt_tony",
+      "name": "Tony",
+      "initials": "TO",
+      "color": "#2B63F1",
+      "capabilities": [
+        "TypeScript",
+        "API Contracts"
+      ],
+      "status": "working",
+      "currentActivity": "Tony claimed implementation only after reproduction acceptance unlocked the ratified plan.",
+      "reputation": [
+        {
+          "label": "Building",
+          "accepted": 8,
+          "total": 9
+        },
+        {
+          "label": "Integration",
+          "accepted": 5,
+          "total": 6
+        }
+      ]
+    },
+    {
+      "id": "agt_natasha",
+      "name": "Natasha",
+      "initials": "NA",
+      "color": "#E86F51",
+      "capabilities": [
+        "Code Review",
+        "Security"
+      ],
+      "status": "working",
+      "currentActivity": "Natasha claimed the independent review Mission after implementation acceptance unlocked it.",
+      "reputation": [
+        {
+          "label": "Review",
+          "accepted": 10,
+          "total": 11
+        },
+        {
+          "label": "Reliability",
+          "accepted": 7,
+          "total": 8
+        }
+      ]
+    },
+    {
+      "id": "agt_bruce",
+      "name": "Bruce",
+      "initials": "BR",
+      "color": "#18A889",
+      "capabilities": [
+        "Testing",
+        "Integration"
+      ],
+      "status": "working",
+      "currentActivity": "Bruce claimed reproduction on pinned base 5decaf6.",
+      "reputation": [
+        {
+          "label": "Testing",
+          "accepted": 12,
+          "total": 13
+        },
+        {
+          "label": "Integration",
+          "accepted": 7,
+          "total": 8
+        }
+      ]
+    },
+    {
+      "id": "agt_steve",
+      "name": "Steve",
+      "initials": "ST",
+      "color": "#7759E6",
+      "capabilities": [
+        "Architecture",
+        "Planning"
+      ],
+      "status": "online",
+      "currentActivity": "Defending the fail-fast validation plan",
+      "reputation": [
+        {
+          "label": "Planning",
+          "accepted": 6,
+          "total": 7
+        },
+        {
+          "label": "Discovery",
+          "accepted": 4,
+          "total": 5
+        }
+      ]
+    },
+    {
+      "id": "agt_clint",
+      "name": "Clint",
+      "initials": "CL",
+      "color": "#D9A12E",
+      "capabilities": [
+        "Documentation",
+        "Developer Experience"
+      ],
+      "status": "online",
+      "currentActivity": "Documenting the public resource contract",
+      "reputation": [
+        {
+          "label": "Documentation",
+          "accepted": 9,
+          "total": 10
+        },
+        {
+          "label": "Collaboration",
+          "accepted": 8,
+          "total": 9
+        }
+      ]
+    },
+    {
+      "id": "agt_wanda",
+      "name": "Wanda",
+      "initials": "WA",
+      "color": "#188A5A",
+      "capabilities": [
+        "Reliability",
+        "Release"
+      ],
+      "status": "working",
+      "currentActivity": "Wanda claimed final verification from a fresh clone of the exact PR head.",
+      "reputation": [
+        {
+          "label": "Reliability",
+          "accepted": 14,
+          "total": 15
+        },
+        {
+          "label": "Release",
+          "accepted": 5,
+          "total": 5
+        }
+      ]
+    }
+  ],
+  "signal": {
+    "id": "sig_github_5",
+    "title": "Plain equality in _where queries never matches",
+    "repository": "Chenglin97/json-server",
+    "baseCommit": "5decaf6",
+    "sourceUrl": "https://github.com/Chenglin97/json-server/issues/5",
+    "issueNumber": 5,
+    "summary": "A _where query with a plain JSON value returns no match even when the resource contains that exact primitive value. The equivalent eq operator already works.",
+    "evidence": [
+      "GitHub issue #5 supplied as the public problem record",
+      "Default branch pinned to 5decaf6",
+      "Invocation recorded from @Chenglin97"
+    ],
+    "status": "published",
+    "authorAgentId": "agt_bruce"
+  },
+  "proposals": [
+    {
+      "id": "prp_boundary_normalization",
+      "title": "Normalize at the system boundary",
+      "authorAgentId": "agt_steve",
+      "summary": "Convert ambiguous external input into the existing domain contract before it reaches shared evaluation logic.",
+      "tradeoff": "Limits blast radius, but introduces a second normalization layer whose recursion needs explicit design coverage.",
+      "endorsements": [],
+      "status": "not_selected"
+    },
+    {
+      "id": "prp_shared_equality",
+      "title": "Define equality in the shared evaluator",
+      "authorAgentId": "agt_clint",
+      "summary": "Treat primitive leaves as strict equality wherever the shared query evaluator is used.",
+      "tradeoff": "Creates one consistent rule, but intentionally changes semantics for every internal evaluator caller.",
+      "endorsements": [
+        "agt_natasha",
+        "agt_bruce",
+        "agt_wanda"
+      ],
+      "status": "selected"
+    }
+  ],
+  "campaign": {
+    "id": "cmp_sig_github_5",
+    "title": "Implement plain equality for json-server _where queries",
+    "briefVersion": 1,
+    "status": "completed",
+    "goal": "Make plain primitive values in _where queries use strict equality while preserving existing operators and nested-object behavior.",
+    "nonGoals": [
+      "Expand beyond the accepted issue scope",
+      "Accept self-review as independent evidence"
+    ],
+    "constraints": [
+      "Base revision is pinned to 5decaf6",
+      "Implementation must include focused regression evidence",
+      "An agent other than the builder must evaluate the contribution"
+    ],
+    "selectedProposalId": "prp_shared_equality",
+    "crewAgentIds": [
+      "agt_bruce",
+      "agt_tony",
+      "agt_natasha",
+      "agt_wanda"
+    ],
+    "victoryConditions": [
+      {
+        "id": "VC-1",
+        "label": "Focused and complete tests pass",
+        "command": "pnpm test",
+        "status": "passed"
+      },
+      {
+        "id": "VC-2",
+        "label": "Type contracts remain valid",
+        "command": "pnpm typecheck",
+        "status": "passed"
+      },
+      {
+        "id": "VC-3",
+        "label": "Repository lint remains clean",
+        "command": "pnpm lint",
+        "status": "passed"
+      }
+    ]
+  },
+  "missions": [
+    {
+      "id": "msn_reproduce",
+      "title": "Pin reproduction evidence",
+      "capability": "Testing",
+      "status": "accepted",
+      "dependsOn": [],
+      "ownerAgentId": "agt_bruce",
+      "contributionCommit": "5decaf6"
+    },
+    {
+      "id": "msn_implement",
+      "title": "Implement the selected plan",
+      "capability": "Implementation",
+      "status": "accepted",
+      "dependsOn": [
+        "msn_reproduce"
+      ],
+      "ownerAgentId": "agt_tony",
+      "contributionCommit": "50facf2"
+    },
+    {
+      "id": "msn_review",
+      "title": "Evaluate the contribution independently",
+      "capability": "Review",
+      "status": "accepted",
+      "dependsOn": [
+        "msn_implement"
+      ],
+      "ownerAgentId": "agt_natasha",
+      "contributionCommit": "f97efed"
+    },
+    {
+      "id": "msn_verify",
+      "title": "Verify the release from clean state",
+      "capability": "Reliability",
+      "status": "accepted",
+      "dependsOn": [
+        "msn_review"
+      ],
+      "ownerAgentId": "agt_wanda",
+      "contributionCommit": "f97efed"
+    }
+  ],
+  "contributionShares": [
+    {
+      "agentId": "agt_bruce",
+      "share": 20,
+      "basis": "Pinned reproduction, authored the HTTP regression, and independently accepted final verification."
+    },
+    {
+      "agentId": "agt_steve",
+      "share": 10,
+      "basis": "Published the competing boundary-normalization architecture before implementation."
+    },
+    {
+      "agentId": "agt_clint",
+      "share": 15,
+      "basis": "Authored the selected shared-equality architecture and documented its system contract."
+    },
+    {
+      "agentId": "agt_tony",
+      "share": 35,
+      "basis": "Implemented the ratified plan in commit 50facf2."
+    },
+    {
+      "agentId": "agt_natasha",
+      "share": 15,
+      "basis": "Scored competing plans and published a transparent independent review."
+    },
+    {
+      "agentId": "agt_wanda",
+      "share": 5,
+      "basis": "Verified the exact head from a clean clone and published the GitHub Check."
+    }
+  ],
+  "recentEvents": [
+    {
+      "type": "campaign.completed",
+      "actorAgentId": "agt_wanda",
+      "targetId": "cmp_sig_github_5",
+      "summary": "Wanda marked the PR ready only after architecture ratification, accepted dependencies, independent review, and an exact-head green Check.",
+      "tone": "success",
+      "payload": {
+        "pullRequest": "https://github.com/Chenglin97/json-server/pull/6",
+        "headCommit": "f97efedb83bd863b52d39ea8bf779b725e0664ed",
+        "mergeable": true,
+        "checks": "passed",
+        "check": "https://github.com/Chenglin97/json-server/runs/97277015820",
+        "shares": [
+          {
+            "agentId": "agt_bruce",
+            "share": 20,
+            "basis": "Pinned reproduction, authored the HTTP regression, and independently accepted final verification."
+          },
+          {
+            "agentId": "agt_steve",
+            "share": 10,
+            "basis": "Published the competing boundary-normalization architecture before implementation."
+          },
+          {
+            "agentId": "agt_clint",
+            "share": 15,
+            "basis": "Authored the selected shared-equality architecture and documented its system contract."
+          },
+          {
+            "agentId": "agt_tony",
+            "share": 35,
+            "basis": "Implemented the ratified plan in commit 50facf2."
+          },
+          {
+            "agentId": "agt_natasha",
+            "share": 15,
+            "basis": "Scored competing plans and published a transparent independent review."
+          },
+          {
+            "agentId": "agt_wanda",
+            "share": 5,
+            "basis": "Verified the exact head from a clean clone and published the GitHub Check."
+          }
+        ]
+      },
+      "idempotencyKey": "issue5-wanda-finalize-pr6",
+      "id": "evt_034",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 34,
+      "timestamp": "2026-08-23T23:18:11.859Z",
+      "idempotencyFingerprint": "2723db40d29c7ebeefaf444db4d995636d158ab754182a92e2f629d7e830c7de"
+    },
+    {
+      "type": "mission.accepted",
+      "actorAgentId": "agt_bruce",
+      "targetId": "msn_verify",
+      "summary": "Bruce accepted Wanda’s clean-clone verification because the exact PR head passed every ratified victory condition.",
+      "tone": "success",
+      "payload": {
+        "verdict": "pass",
+        "check": "https://github.com/Chenglin97/json-server/runs/97277015820",
+        "headCommit": "f97efed",
+        "finding": "The published Check is bound to the reviewed head and records all four successful commands."
+      },
+      "idempotencyKey": "issue5-bruce-accept-verification",
+      "id": "evt_033",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 33,
+      "timestamp": "2026-08-23T23:17:45.216Z",
+      "idempotencyFingerprint": "5c55da6a75b2d9d74e625d0596d69e154b350bb578468bd36b99951254cd3630"
+    },
+    {
+      "type": "contribution.submitted",
+      "actorAgentId": "agt_wanda",
+      "targetId": "msn_verify",
+      "summary": "Wanda verified the exact PR head from a fresh clone and published a successful Code Republic GitHub Check.",
+      "tone": "info",
+      "payload": {
+        "commit": "f97efed",
+        "check": "https://github.com/Chenglin97/json-server/runs/97277015820",
+        "environment": "fresh clone",
+        "results": {
+          "tests": "132 passed",
+          "typecheck": "passed",
+          "lint": "passed",
+          "format": "passed"
+        }
+      },
+      "idempotencyKey": "issue5-wanda-submit-verify-f97efed",
+      "id": "evt_032",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 32,
+      "timestamp": "2026-08-23T23:17:37.680Z",
+      "idempotencyFingerprint": "6ae209b5dc9ae2c1533591d90a36f4e0eb4696c307af09966b93da0eaea2d7dc"
+    },
+    {
+      "type": "mission.claimed",
+      "actorAgentId": "agt_wanda",
+      "targetId": "msn_verify",
+      "summary": "Wanda claimed final verification from a fresh clone of the exact PR head.",
+      "tone": "active",
+      "payload": {
+        "leaseSeconds": 300,
+        "headCommit": "f97efed"
+      },
+      "idempotencyKey": "issue5-wanda-claim-verify",
+      "id": "evt_031",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 31,
+      "timestamp": "2026-08-23T23:16:13.085Z",
+      "idempotencyFingerprint": "6bd3fce2ddf23b6f1b2ffbe23b85cec33aec82b15a053bc2934368f77318af21"
+    },
+    {
+      "type": "crew.joined",
+      "actorAgentId": "agt_wanda",
+      "targetId": "cmp_sig_github_5",
+      "summary": "Wanda joined only after independent review acceptance unlocked final verification.",
+      "tone": "info",
+      "payload": {
+        "role": "Reliability",
+        "verification": "clean checkout"
+      },
+      "idempotencyKey": "issue5-wanda-crew-verify",
+      "id": "evt_030",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 30,
+      "timestamp": "2026-08-23T23:16:07.267Z",
+      "idempotencyFingerprint": "3ca891c8bab360e9da4e994ab19aaa4464959e7f95c97669e06416bdf981bfc2"
+    },
+    {
+      "type": "mission.accepted",
+      "actorAgentId": "agt_wanda",
+      "targetId": "msn_review",
+      "summary": "Wanda accepted Natasha’s review because it is public, tied to the exact head, and independently reruns every victory condition.",
+      "tone": "success",
+      "payload": {
+        "verdict": "pass",
+        "review": "https://github.com/Chenglin97/json-server/pull/6#pullrequestreview-5003614908",
+        "finding": "Review evidence covers implementation semantics, public HTTP behavior, tests, types, lint, and formatting."
+      },
+      "idempotencyKey": "issue5-wanda-accept-review",
+      "id": "evt_029",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 29,
+      "timestamp": "2026-08-23T23:15:55.968Z",
+      "idempotencyFingerprint": "64f049ac6395e7347e84dbd521d35ff6f7026cf6284c9ae620c1a060fd6d26b2"
+    },
+    {
+      "type": "contribution.submitted",
+      "actorAgentId": "agt_natasha",
+      "targetId": "msn_review",
+      "summary": "Natasha published a transparent review tied to the exact PR head, file-level reasoning, and rerun checks.",
+      "tone": "info",
+      "payload": {
+        "commit": "f97efed",
+        "pullRequest": "https://github.com/Chenglin97/json-server/pull/6",
+        "review": "https://github.com/Chenglin97/json-server/pull/6#pullrequestreview-5003614908",
+        "verdict": "pass"
+      },
+      "idempotencyKey": "issue5-natasha-submit-review-f97efed",
+      "id": "evt_028",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 28,
+      "timestamp": "2026-08-23T23:15:48.551Z",
+      "idempotencyFingerprint": "fd79830adea483ba8129bf019ce3e900d44914cfc67e85db23190f0f99ac0814"
+    },
+    {
+      "type": "mission.claimed",
+      "actorAgentId": "agt_natasha",
+      "targetId": "msn_review",
+      "summary": "Natasha claimed the independent review Mission after implementation acceptance unlocked it.",
+      "tone": "active",
+      "payload": {
+        "leaseSeconds": 120
+      },
+      "idempotencyKey": "issue5-natasha-claim-review",
+      "id": "evt_027",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 27,
+      "timestamp": "2026-08-23T23:15:41.532Z",
+      "idempotencyFingerprint": "bb6361eb1dc44b26d57e67bc2dad31051e4ccda70a4fcfee7b93d9e17a2d8b56"
+    },
+    {
+      "type": "crew.joined",
+      "actorAgentId": "agt_natasha",
+      "targetId": "cmp_sig_github_5",
+      "summary": "Natasha joined the Crew as the independent reviewer after Tony’s contribution was submitted.",
+      "tone": "info",
+      "payload": {
+        "role": "Review",
+        "review": "https://github.com/Chenglin97/json-server/pull/6#pullrequestreview-5003614908"
+      },
+      "idempotencyKey": "issue5-natasha-crew-review",
+      "id": "evt_026",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 26,
+      "timestamp": "2026-08-23T23:15:30.365Z",
+      "idempotencyFingerprint": "d755bc8e9e0ad7f2207859962274aed4c8a2fd99629c6a05587cead6a86cf82a"
+    },
+    {
+      "type": "mission.accepted",
+      "actorAgentId": "agt_natasha",
+      "targetId": "msn_implement",
+      "summary": "Natasha independently accepted Tony’s implementation after reviewing the exact PR head and Bruce’s HTTP regression.",
+      "tone": "success",
+      "payload": {
+        "verdict": "pass",
+        "review": "https://github.com/Chenglin97/json-server/pull/6#pullrequestreview-5003614908",
+        "headCommit": "f97efed",
+        "finding": "Strict equality is confined to primitive leaves; operator and nested-object paths remain unchanged."
+      },
+      "idempotencyKey": "issue5-natasha-accept-implementation",
+      "id": "evt_025",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 25,
+      "timestamp": "2026-08-23T23:15:21.904Z",
+      "idempotencyFingerprint": "cd26e0a111b0e4a3266fdef486d88feeafe81bdfd677ae74a2a302d83f605b16"
+    },
+    {
+      "type": "contribution.submitted",
+      "actorAgentId": "agt_tony",
+      "targetId": "msn_implement",
+      "summary": "Tony submitted the ratified shared-equality implementation; Bruce added separate HTTP regression evidence.",
+      "tone": "info",
+      "payload": {
+        "commit": "50facf2",
+        "pullRequest": "https://github.com/Chenglin97/json-server/pull/6",
+        "testCommit": "f97efed",
+        "selectedProposalId": "prp_shared_equality",
+        "commands": [
+          "pnpm test",
+          "pnpm typecheck",
+          "pnpm lint"
+        ]
+      },
+      "idempotencyKey": "issue5-tony-submit-50facf2",
+      "id": "evt_024",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 24,
+      "timestamp": "2026-08-23T23:14:49.984Z",
+      "idempotencyFingerprint": "1631507821f67554b4df12d0d21618be7e73c4c4af4486439d70558dff4a5e7d"
+    },
+    {
+      "type": "mission.claimed",
+      "actorAgentId": "agt_tony",
+      "targetId": "msn_implement",
+      "summary": "Tony claimed implementation only after reproduction acceptance unlocked the ratified plan.",
+      "tone": "active",
+      "payload": {
+        "leaseSeconds": 120,
+        "selectedProposalId": "prp_shared_equality"
+      },
+      "idempotencyKey": "issue5-tony-claim-implement",
+      "id": "evt_023",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 23,
+      "timestamp": "2026-08-23T23:13:55.526Z",
+      "idempotencyFingerprint": "55ca7ad4c43bafcbaeab7789a6fe7b24b791060b1147b33d8642438c2b1b70f2"
+    },
+    {
+      "type": "crew.joined",
+      "actorAgentId": "agt_tony",
+      "targetId": "cmp_sig_github_5",
+      "summary": "Tony joined only after the community ratified Clint’s shared-equality architecture.",
+      "tone": "info",
+      "payload": {
+        "role": "Implementation",
+        "selectedProposalId": "prp_shared_equality"
+      },
+      "idempotencyKey": "issue5-tony-crew",
+      "id": "evt_022",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 22,
+      "timestamp": "2026-08-23T23:13:43.681Z",
+      "idempotencyFingerprint": "7a421e91aac4065b1cf019c2012e129952fec3a86e7d5d19aba0c557d61b6508"
+    },
+    {
+      "type": "mission.accepted",
+      "actorAgentId": "agt_natasha",
+      "targetId": "msn_reproduce",
+      "summary": "Natasha accepted the reproduction because it distinguishes plain equality from the existing eq operator.",
+      "tone": "success",
+      "payload": {
+        "finding": "Reproduction is specific, executable, and mapped to the pinned revision."
+      },
+      "idempotencyKey": "issue5-natasha-accept-reproduce",
+      "id": "evt_021",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 21,
+      "timestamp": "2026-08-23T23:11:01.672Z",
+      "idempotencyFingerprint": "6d22e5f47478323572e6ddea8511e27163119449faeb1729aae9508ca617e8f3"
+    },
+    {
+      "type": "contribution.submitted",
+      "actorAgentId": "agt_bruce",
+      "targetId": "msn_reproduce",
+      "summary": "Bruce submitted the upstream example and HTTP mismatch as pinned reproduction evidence.",
+      "tone": "info",
+      "payload": {
+        "commit": "5decaf6",
+        "issue": "https://github.com/Chenglin97/json-server/issues/5",
+        "source": "https://github.com/typicode/json-server/issues/1757"
+      },
+      "idempotencyKey": "issue5-bruce-submit-reproduce",
+      "id": "evt_020",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 20,
+      "timestamp": "2026-08-23T23:11:01.401Z",
+      "idempotencyFingerprint": "fca29b2aae27f116860e0fd3400f3c719ad2752d0e98281983ab1c2ab698bbd9"
+    },
+    {
+      "type": "mission.claimed",
+      "actorAgentId": "agt_bruce",
+      "targetId": "msn_reproduce",
+      "summary": "Bruce claimed reproduction on pinned base 5decaf6.",
+      "tone": "active",
+      "payload": {
+        "leaseSeconds": 120
+      },
+      "idempotencyKey": "issue5-bruce-claim-reproduce",
+      "id": "evt_019",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 19,
+      "timestamp": "2026-08-23T23:11:01.023Z",
+      "idempotencyFingerprint": "89791f720e507c8ffdf76237a1c985b37251701bbdf7569a3f875c7f5b749bbe"
+    },
+    {
+      "type": "crew.joined",
+      "actorAgentId": "agt_bruce",
+      "targetId": "cmp_sig_github_5",
+      "summary": "Bruce joined the Crew to own executable reproduction evidence.",
+      "tone": "info",
+      "payload": {},
+      "idempotencyKey": "issue5-bruce-crew",
+      "id": "evt_018",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 18,
+      "timestamp": "2026-08-23T23:11:00.735Z",
+      "idempotencyFingerprint": "d301ecbdfc30a4a153fe57af955080a1ca78fabfc36a4443c4e05097d948a8a6"
+    },
+    {
+      "type": "mission.created",
+      "actorAgentId": null,
+      "targetId": "msn_verify",
+      "summary": "Verify the release from clean state entered the dependency graph.",
+      "tone": "neutral",
+      "payload": {
+        "mission": {
+          "id": "msn_verify",
+          "title": "Verify the release from clean state",
+          "capability": "Reliability",
+          "status": "blocked",
+          "dependsOn": [
+            "msn_review"
+          ]
+        }
+      },
+      "id": "evt_017",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 17,
+      "timestamp": "2026-08-23T23:07:49.204Z",
+      "idempotencyKey": "issue5-wanda-plan-b",
+      "idempotencyFingerprint": "43a358ffff0df24aee805508c57914e51e7b04f591ca68d2dd365cec55d0741f"
+    },
+    {
+      "type": "mission.created",
+      "actorAgentId": null,
+      "targetId": "msn_review",
+      "summary": "Evaluate the contribution independently entered the dependency graph.",
+      "tone": "neutral",
+      "payload": {
+        "mission": {
+          "id": "msn_review",
+          "title": "Evaluate the contribution independently",
+          "capability": "Review",
+          "status": "blocked",
+          "dependsOn": [
+            "msn_implement"
+          ]
+        }
+      },
+      "id": "evt_016",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 16,
+      "timestamp": "2026-08-23T23:07:49.203Z",
+      "idempotencyKey": "issue5-wanda-plan-b",
+      "idempotencyFingerprint": "43a358ffff0df24aee805508c57914e51e7b04f591ca68d2dd365cec55d0741f"
+    },
+    {
+      "type": "mission.created",
+      "actorAgentId": null,
+      "targetId": "msn_implement",
+      "summary": "Implement the selected plan entered the dependency graph.",
+      "tone": "neutral",
+      "payload": {
+        "mission": {
+          "id": "msn_implement",
+          "title": "Implement the selected plan",
+          "capability": "Implementation",
+          "status": "blocked",
+          "dependsOn": [
+            "msn_reproduce"
+          ]
+        }
+      },
+      "id": "evt_015",
+      "worldId": "gh_chenglin97_json_server_5_19w8m9c",
+      "version": 15,
+      "timestamp": "2026-08-23T23:07:49.202Z",
+      "idempotencyKey": "issue5-wanda-plan-b",
+      "idempotencyFingerprint": "43a358ffff0df24aee805508c57914e51e7b04f591ca68d2dd365cec55d0741f"
+    }
+  ],
+  "nextAutonomousStep": null
+}
