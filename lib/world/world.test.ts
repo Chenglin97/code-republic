@@ -4,7 +4,7 @@ import { WorldAuthority } from "./authority";
 import { planAgentJoin } from "./join";
 import { StorageVersionConflict, validateEventLog, type WorldEventStorage } from "./persistence";
 import { projectWorld } from "./reducer";
-import { createSeedEvents } from "./seed";
+import { createGithubIssueEvents, createSeedEvents } from "./seed";
 import type { EventDraft, WorldAction, WorldEvent, WorldSnapshot } from "./types";
 
 class MemoryStorage implements WorldEventStorage {
@@ -70,6 +70,45 @@ describe("World projection", () => {
 });
 
 describe("World rules", () => {
+  it("ratifies a GitHub Campaign and publishes its dependency graph after three independent endorsements", () => {
+    let events = createGithubIssueEvents({
+      worldId: "gh_example_repo_2_test",
+      repository: "example/repo",
+      baseCommit: "abc1234",
+      issueNumber: 2,
+      issueUrl: "https://github.com/example/repo/issues/2",
+      title: "Plain equality does not match",
+      summary: "Normalize plain equality without changing operator queries.",
+      requestedBy: "maintainer",
+    });
+    const actors = ["agt_natasha", "agt_bruce", "agt_wanda"];
+
+    for (const [index, actorAgentId] of actors.entries()) {
+      const snapshot = projectWorld(events);
+      const drafts = decideAction(snapshot, {
+        type: "campaign.endorse",
+        actorAgentId,
+        targetId: "prp_shared_equality",
+        expectedWorldVersion: snapshot.world.version,
+        idempotencyKey: `test:github:endorse:${actorAgentId}`,
+        summary: `${actorAgentId} endorses the proposal.`,
+      });
+      if (index < 2) expect(drafts).toHaveLength(1);
+      events = append(events, drafts);
+    }
+
+    const snapshot = projectWorld(events);
+    expect(snapshot.campaign?.selectedProposalId).toBe("prp_shared_equality");
+    expect(snapshot.proposals.find((proposal) => proposal.id === "prp_shared_equality")?.status).toBe("selected");
+    expect(snapshot.missions.map((mission) => mission.status)).toEqual(["available", "blocked", "blocked", "blocked"]);
+    expect(snapshot.missions.map((mission) => mission.dependsOn)).toEqual([
+      [],
+      ["msn_reproduce"],
+      ["msn_implement"],
+      ["msn_review"],
+    ]);
+  });
+
   it("blocks a Mission while dependencies are unmet", () => {
     let events = createSeedEvents();
     events = append(events, nextDemoDrafts(projectWorld(events)));

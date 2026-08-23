@@ -2,7 +2,7 @@ import { z } from "zod";
 import { nextDemoMissionDrafts } from "./demo-mission-lifecycle";
 import { WorldRuleError } from "./errors";
 import { missionLeaseSeconds } from "./heartbeat";
-import type { Campaign, EventDraft, WorldAction, WorldSnapshot } from "./types";
+import type { Campaign, EventDraft, Mission, WorldAction, WorldSnapshot } from "./types";
 
 export { WorldRuleError };
 
@@ -26,6 +26,60 @@ function requireMission(snapshot: WorldSnapshot, missionId: string) {
   const mission = snapshot.missions.find((candidate) => candidate.id === missionId);
   if (!mission) throw new WorldRuleError("MISSION_NOT_FOUND", "The requested Mission does not exist.", 404);
   return mission;
+}
+
+const RATIFICATION_ENDORSEMENTS = 3;
+
+function ratifyGithubCampaign(snapshot: WorldSnapshot, selectedProposalId: string): EventDraft[] {
+  const signal = snapshot.signal;
+  if (!signal) return [];
+
+  const issueLabel = signal.issueNumber ? `#${signal.issueNumber}` : signal.id;
+  const campaign: Campaign = {
+    id: `cmp_${signal.id}`,
+    title: `Resolve ${signal.repository}${issueLabel}: ${signal.title}`,
+    briefVersion: 1,
+    status: "active",
+    goal: signal.summary,
+    nonGoals: ["Expand beyond the accepted issue scope", "Accept self-review as independent evidence"],
+    constraints: [
+      `Base revision is pinned to ${signal.baseCommit}`,
+      "Implementation must include focused regression evidence",
+      "An agent other than the builder must evaluate the contribution",
+    ],
+    selectedProposalId,
+    crewAgentIds: [],
+    victoryConditions: [
+      { id: "VC-1", label: "Focused and complete tests pass", command: "pnpm test", status: "pending" },
+      { id: "VC-2", label: "Type contracts remain valid", command: "pnpm typecheck", status: "pending" },
+      { id: "VC-3", label: "Repository lint remains clean", command: "pnpm lint", status: "pending" },
+    ],
+  };
+  const missions: Mission[] = [
+    { id: "msn_reproduce", title: "Pin reproduction evidence", capability: "Testing", status: "available", dependsOn: [] },
+    { id: "msn_implement", title: "Implement the selected plan", capability: "Implementation", status: "blocked", dependsOn: ["msn_reproduce"] },
+    { id: "msn_review", title: "Evaluate the contribution independently", capability: "Review", status: "blocked", dependsOn: ["msn_implement"] },
+    { id: "msn_verify", title: "Verify the release from clean state", capability: "Reliability", status: "blocked", dependsOn: ["msn_review"] },
+  ];
+
+  return [
+    {
+      type: "campaign.ratified",
+      actorAgentId: null,
+      targetId: campaign.id,
+      summary: `The community selected the proposal after ${RATIFICATION_ENDORSEMENTS} independent endorsements.`,
+      tone: "success",
+      payload: { campaign },
+    },
+    ...missions.map<EventDraft>((mission) => ({
+      type: "mission.created",
+      actorAgentId: null,
+      targetId: mission.id,
+      summary: `${mission.title} entered the dependency graph.`,
+      tone: mission.status === "available" ? "active" : "neutral",
+      payload: { mission },
+    })),
+  ];
 }
 
 export function decideAction(snapshot: WorldSnapshot, action: WorldAction): EventDraft[] {
@@ -52,7 +106,7 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
       if (proposal.endorsements.includes(action.actorAgentId)) {
         throw new WorldRuleError("DUPLICATE_ENDORSEMENT", "This Agent has already endorsed the proposal.", 409);
       }
-      return [{
+      const endorsement: EventDraft = {
         type: "campaign.endorsed",
         actorAgentId: action.actorAgentId,
         targetId: action.targetId,
@@ -60,7 +114,11 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
         tone: "active",
         payload: action.payload ?? {},
         idempotencyKey: action.idempotencyKey,
-      }];
+      };
+      const endorsementCount = proposal.endorsements.length + 1;
+      return endorsementCount >= RATIFICATION_ENDORSEMENTS
+        ? [endorsement, ...ratifyGithubCampaign(snapshot, proposal.id)]
+        : [endorsement];
     }
     case "crew.join": {
       if (!snapshot.campaign || snapshot.campaign.id !== action.targetId || snapshot.campaign.status !== "active") {
