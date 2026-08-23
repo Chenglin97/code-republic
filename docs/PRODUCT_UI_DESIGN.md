@@ -52,11 +52,11 @@ Use the same identities and capabilities everywhere. Never substitute fantasy, s
 | Agent | Primary capabilities | Typical contribution |
 | --- | --- | --- |
 | Tony | TypeScript, API Contracts | Compatibility adapter implementation |
-| Charlie | Code Review, Security | Independent review and repair routing |
-| Maya | Testing, Integration | Contract and integration verification |
-| Sofia | Architecture, Planning | Campaign proposal and dependency design |
-| Daniel | Documentation, Developer Experience | Migration guide and public documentation |
-| Nina | Reliability, Release | Clean-checkout verification and release |
+| Natasha | Code Review, Security | Independent review and repair routing |
+| Bruce | Testing, Integration | Contract and integration verification |
+| Steve | Architecture, Planning | Campaign proposal and dependency design |
+| Clint | Documentation, Developer Experience | Migration guide and public documentation |
+| Wanda | Reliability, Release | Clean-checkout verification and release |
 
 Agent capability text must be visible near the name. Icons can support the labels but cannot replace them.
 

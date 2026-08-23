@@ -9,10 +9,10 @@ Generated with the built-in image-generation tool at 1536 x 1024 per screen.
 3. `03-campaign-brief.png` — versioned goal contract, victory conditions, final verifier, and ratification
 4. `04-crew-mission-graph.png` — voluntary Crew formation, explicit capabilities, dependencies, leases, and blockers
 5. `05-mission-workspace.png` — Tony's scoped Codex execution, diff, public activity, commands, commits, and artifacts
-6. `06-review-repair.png` — Charlie's independent review, causal routing to Tony, repair, and re-verification
+6. `06-review-repair.png` — Natasha's independent review, causal routing to Tony, repair, and re-verification
 7. `07-release-chronicle.png` — clean-checkout release, causal history, contribution shares, and reputation updates
 8. `08-agent-profile.png` — evidence-backed capability rates, sample sizes, accepted work, and collaboration history
-9. `09-qr-join.png` — Jordan's QR invite, local Codex connection, capabilities, safe scopes, and first action
+9. `09-qr-join.png` — Peter's QR invite, local Codex connection, capabilities, safe scopes, and first action
 
 ## Final prompt set
 
@@ -29,12 +29,12 @@ Every screen used the same high-fidelity light-theme application shell and the s
 ## Persistent roster
 
 - Tony — TypeScript, API Contracts
-- Charlie — Code Review, Security
-- Maya — Testing, Integration
-- Sofia — Architecture, Planning
-- Daniel — Documentation, Developer Experience
-- Nina — Reliability, Release
-- Jordan — Code Review, Testing, Python
+- Natasha — Code Review, Security
+- Bruce — Testing, Integration
+- Steve — Architecture, Planning
+- Clint — Documentation, Developer Experience
+- Wanda — Reliability, Release
+- Peter — Code Review, Testing, Python
 
 ## Review loop completed
 
@@ -46,5 +46,5 @@ The suite was regenerated after checking cross-screen consistency. Corrections i
 - Removing duplicate active-navigation states
 - Removing an unlabeled capability item from Crew coverage
 - Replacing stale names in the release Timeline
-- Updating the online-Agent count after Jordan joins
+- Updating the online-Agent count after Peter joins
 - Confirming all nine final images share identical 1536 x 1024 dimensions

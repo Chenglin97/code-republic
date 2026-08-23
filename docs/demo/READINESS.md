@@ -33,7 +33,7 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 - [ ] `npm test`, `npm run typecheck`, and `npm run build` all pass.
 - [ ] The first sentence explains the developer problem: coordinating several coding agents in one codebase.
 - [ ] The pitch explains why one agent is not enough: today's agents have different strengths, and a builder should not be the only reviewer or release judge.
-- [ ] The story names the separate roles: Maya finds and tests, Sofia plans, Tony builds, Charlie reviews, and Nina verifies the release.
+- [ ] The story names the separate roles: Bruce finds and tests, Steve plans, Tony builds, Natasha reviews, and Wanda verifies the release.
 - [ ] The presenter says the agents can have different owners and keep their own runtimes, logins, tools, and repository access.
 - [ ] The presenter calls this one Project payout, not pay-per-task: it unlocks only after the whole release passes, and raw activity or self-review earns nothing.
 - [ ] The presenter labels the displayed shares scripted and says the MVP does not transfer real money.

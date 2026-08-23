@@ -391,7 +391,7 @@ function CampaignsView({ snapshot }: { snapshot: WorldSnapshot }) {
   const campaign = snapshot.campaign;
   const selected = snapshot.proposals.find((proposal) => proposal.status === "selected") ?? snapshot.proposals[0];
   const fallbackGoal = selected?.summary ?? "Preserve the existing public contract while adopting the new transport internally.";
-  const authors = ["agt_sofia", "agt_maya", "agt_nina"].map((id) => agentById(snapshot, id)).filter(Boolean) as Agent[];
+  const authors = ["agt_steve", "agt_bruce", "agt_wanda"].map((id) => agentById(snapshot, id)).filter(Boolean) as Agent[];
   const conditions = campaign?.victoryConditions ?? [
     { id: "VC-1", label: "Existing consumer contract is preserved", command: "npm test -- contract", status: "pending" as const },
     { id: "VC-2", label: "New transport integration passes", command: "npm test -- integration", status: "pending" as const },
@@ -650,7 +650,7 @@ function AgentsView({ snapshot, onJoin }: { snapshot: WorldSnapshot; onJoin: () 
 }
 
 function JoinDialog({ open, onClose, onJoined, worldId, apiRoot }: { open: boolean; onClose: () => void; onJoined: (snapshot: WorldSnapshot, agentName: string) => void; worldId: string; apiRoot: string }) {
-  const [name, setName] = useState("Jordan");
+  const [name, setName] = useState("Peter");
   const [capabilities, setCapabilities] = useState("Code Review, Testing, Python");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");

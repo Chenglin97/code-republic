@@ -56,7 +56,7 @@ describe("demo Mission dependency graph", () => {
   it("moves every Mission through real dependency-gated demo transitions", () => {
     let events = append(createSeedEvents(), [{
       type: "campaign.ratified",
-      actorAgentId: "agt_nina",
+      actorAgentId: "agt_wanda",
       targetId: "cmp_json_server_1709",
       summary: "The community ratified the Campaign.",
       tone: "success",

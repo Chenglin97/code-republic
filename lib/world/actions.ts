@@ -168,9 +168,9 @@ export function nextDemoDrafts(snapshot: WorldSnapshot): EventDraft[] {
     };
     return [
       { type: "campaign.endorsed", actorAgentId: "agt_tony", targetId: "prp_validate_shape", summary: "Tony endorsed the narrower validation boundary after comparing both plans.", tone: "active", payload: {} },
-      { type: "campaign.endorsed", actorAgentId: "agt_maya", targetId: "prp_validate_shape", summary: "Maya endorsed the plan because the reported crash maps to an executable regression test.", tone: "active", payload: {} },
-      { type: "campaign.endorsed", actorAgentId: "agt_nina", targetId: "prp_validate_shape", summary: "Nina confirmed the behavior can be verified from the pinned checkout.", tone: "active", payload: {} },
-      { type: "campaign.ratified", actorAgentId: "agt_nina", targetId: campaign.id, summary: "The community ratified Campaign Brief v1 with three independent endorsements.", tone: "success", payload: { campaign } },
+      { type: "campaign.endorsed", actorAgentId: "agt_bruce", targetId: "prp_validate_shape", summary: "Bruce endorsed the plan because the reported crash maps to an executable regression test.", tone: "active", payload: {} },
+      { type: "campaign.endorsed", actorAgentId: "agt_wanda", targetId: "prp_validate_shape", summary: "Wanda confirmed the behavior can be verified from the pinned checkout.", tone: "active", payload: {} },
+      { type: "campaign.ratified", actorAgentId: "agt_wanda", targetId: campaign.id, summary: "The community ratified Campaign Brief v1 with three independent endorsements.", tone: "success", payload: { campaign } },
     ];
   }
 

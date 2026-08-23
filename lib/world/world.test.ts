@@ -65,7 +65,7 @@ describe("World projection", () => {
     expect(snapshot.missions.every((mission) => mission.status === "accepted")).toBe(true);
     expect(snapshot.campaign?.victoryConditions.every((condition) => condition.status === "passed")).toBe(true);
     expect(snapshot.contributionShares.reduce((sum, item) => sum + item.share, 0)).toBe(100);
-    expect(snapshot.contributionShares.find((item) => item.agentId === "agt_daniel")?.share).toBeGreaterThan(0);
+    expect(snapshot.contributionShares.find((item) => item.agentId === "agt_clint")?.share).toBeGreaterThan(0);
   });
 });
 
@@ -77,11 +77,11 @@ describe("World rules", () => {
     const snapshot = projectWorld(events);
     const action: WorldAction = {
       type: "mission.claim",
-      actorAgentId: "agt_nina",
+      actorAgentId: "agt_wanda",
       targetId: "msn_validation",
       expectedWorldVersion: snapshot.world.version,
       idempotencyKey: "test:blocked:claim",
-      summary: "Nina wants to claim integration.",
+      summary: "Wanda wants to claim integration.",
     };
     expect(() => decideAction(snapshot, action)).toThrowError(WorldRuleError);
     expect(() => decideAction(snapshot, action)).toThrowError(/dependencies/);
@@ -110,11 +110,11 @@ describe("World rules", () => {
     const snapshot = projectWorld(events);
     expect(() => decideAction(snapshot, {
       type: "mission.claim",
-      actorAgentId: "agt_sofia",
+      actorAgentId: "agt_steve",
       targetId: "msn_contract",
       expectedWorldVersion: snapshot.world.version,
       idempotencyKey: "test:not-in-crew",
-      summary: "Sofia attempts to claim the adapter Mission.",
+      summary: "Steve attempts to claim the adapter Mission.",
     })).toThrowError(/join the Crew/);
   });
 
@@ -189,7 +189,7 @@ describe("World authority", () => {
 
     const results = await Promise.allSettled([
       authority.submitAction("demo", makeClaim("agt_tony", "race:tony")),
-      authority.submitAction("demo", makeClaim("agt_maya", "race:maya")),
+      authority.submitAction("demo", makeClaim("agt_bruce", "race:maya")),
     ]);
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
     const rejected = results.find((result): result is PromiseRejectedResult => result.status === "rejected");
@@ -282,7 +282,7 @@ describe("World authority", () => {
       summary: "Tony claims the contract Mission.",
     });
 
-    await expect(authority.heartbeatAgent("demo", "agt_maya", {
+    await expect(authority.heartbeatAgent("demo", "agt_bruce", {
       expectedWorldVersion: claim.worldVersion,
       idempotencyKey: "heartbeat:maya:wrong-mission",
       lastObservedWorldVersion: claim.worldVersion,

@@ -124,9 +124,9 @@ async function join(name, capabilityText) {
     .slice(0, 4);
   const body = {
     inviteCode,
-    displayName: name || "Jordan",
+    displayName: name || "Peter",
     capabilities,
-    idempotencyKey: `demo-cli:${(name || "Jordan").toLowerCase().replace(/[^a-z0-9]+/g, "-")}:${Date.now()}`,
+    idempotencyKey: `demo-cli:${(name || "Peter").toLowerCase().replace(/[^a-z0-9]+/g, "-")}:${Date.now()}`,
   };
   const result = (await request("/api/worlds/demo/join", {
     method: "POST",

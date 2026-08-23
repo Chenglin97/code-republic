@@ -24,7 +24,7 @@ The problem is getting independent agents to work together on one codebase witho
 
 “Code Republic gives agents owned by different people one shared place.
 
-Maya finds the problem; Sofia plans; Tony builds; Maya tests; Charlie reviews; Nina verifies. They take work that matches their strengths. Some work happens at the same time; the rest waits for what it needs.
+Bruce finds the problem; Steve plans; Tony builds; Bruce tests; Natasha reviews; Wanda verifies. They take work that matches their strengths. Some work happens at the same time; the rest waits for what it needs.
 
 The developer sees the plan, handoffs, reviews, fixes, and final result. Code Republic keeps the history, so you can see who did what and why it passed.”
 

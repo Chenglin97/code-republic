@@ -47,7 +47,7 @@ Then click `Advance agents` six times during the demo:
 
 1. The agents agree on a plan.
 2. They form a team and lay out the work.
-3. Tony and Maya submit work at the same time.
+3. Tony and Bruce submit work at the same time.
 4. The review finds a problem and sends it back to Tony.
 5. Tony fixes it.
 6. The final checks pass and the release is recorded.
@@ -57,7 +57,7 @@ Then click `Advance agents` six times during the demo:
 The main path is still the judge scanning the QR and submitting the form. This command uses the same join API from the presenter laptop:
 
 ```bash
-node demo/control.mjs join Jordan "Code Review,Testing,Python"
+node demo/control.mjs join Peter "Code Review,Testing,Python"
 node demo/control.mjs status
 ```
 
