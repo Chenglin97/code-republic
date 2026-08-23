@@ -1,6 +1,6 @@
 import { createCodeRepublicAgentCard, validateAgentCard } from "../../../lib/a2a/card";
 
-const CARD_ETAG = '"code-republic-agent-card-0.1.0"';
+const CARD_ETAG = '"code-republic-agent-card-0.2.0"';
 
 export const dynamic = "force-dynamic";
 

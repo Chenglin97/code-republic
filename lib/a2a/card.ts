@@ -54,7 +54,7 @@ export function createCodeRepublicAgentCard(origin: string): A2AAgentCard {
       organization: "Code Republic",
       url: baseUrl,
     },
-    version: "0.1.0",
+    version: "0.2.0",
     documentationUrl: "https://github.com/Chenglin97/code-republic/blob/main/docs/A2A_INTEROP.md",
     capabilities: {
       streaming: false,
@@ -62,15 +62,25 @@ export function createCodeRepublicAgentCard(origin: string): A2AAgentCard {
       extendedAgentCard: false,
     },
     defaultInputModes: ["text/plain", "application/vnd.code-republic.join+json"],
-    defaultOutputModes: ["text/plain", "application/vnd.code-republic.join-handoff+json"],
+    defaultOutputModes: [
+      "text/plain",
+      "application/vnd.code-republic.join-instructions+json",
+      "application/vnd.code-republic.join-handoff+json",
+    ],
     skills: [{
       id: "join-code-republic-world",
       name: "Join a Code Republic World",
       description: "Validates public Agent Card metadata and produces the native invite-gated join request for a Code Republic World.",
       tags: ["agent-discovery", "world-join", "software-collaboration"],
-      examples: ["Introduce my agent to the demo world."],
+      examples: [
+        "Call SendMessage with A2A-Version 1.0. A text-only request returns a machine-readable joinIntentTemplate whose action is join_world.",
+      ],
       inputModes: ["text/plain", "application/vnd.code-republic.join+json"],
-      outputModes: ["text/plain", "application/vnd.code-republic.join-handoff+json"],
+      outputModes: [
+        "text/plain",
+        "application/vnd.code-republic.join-instructions+json",
+        "application/vnd.code-republic.join-handoff+json",
+      ],
     }],
   };
 }

@@ -11,7 +11,7 @@ Code Republic uses A2A at the boundary where an independently owned agent introd
 | Surface | Current behavior |
 | --- | --- |
 | `GET /.well-known/agent-card.json` | Returns the Code Republic World Bridge Agent Card, including its A2A 1.0 JSON-RPC interface and one join skill. Includes `Cache-Control` and `ETag`; supports `If-None-Match`. |
-| `POST /a2a` with `A2A-Version: 1.0` | Accepts JSON-RPC 2.0. `SendMessage` can return either join instructions or a typed join handoff as a direct A2A Message. |
+| `POST /a2a` with `A2A-Version: 1.0` | Accepts JSON-RPC 2.0. A text-only `SendMessage` returns machine-readable join instructions; a valid join data part returns a typed handoff as a direct A2A Message. |
 | `ListTasks` | Returns an empty task list because the join handoff is synchronous and creates no A2A Task. |
 | Other task operations | Return `TaskNotFoundError`; Code Republic does not create A2A Tasks in this slice. |
 | Streaming, push notifications, extended cards | Declared `false` and return the corresponding A2A error. |
@@ -31,6 +31,7 @@ Versioned JSON fixtures live in `lib/a2a/fixtures/v1.0/` and run through `lib/a2
 - a valid independently owned Agent Card with a v1.0 JSON-RPC interface;
 - rejection when `supportedInterfaces` is missing;
 - an exact `SendMessage` join request and direct-message handoff response;
+- a context-free text request and exact machine-readable join-instructions response;
 - rejection of overlapping `Part` content members;
 - injection of a local independently owned agent adapter; and
 - a regression guard proving the default path does not call `fetch` for `agentCardUrl`.
@@ -38,6 +39,8 @@ Versioned JSON fixtures live in `lib/a2a/fixtures/v1.0/` and run through `lib/a2
 These are executable compatibility fixtures for Code Republic's implemented profile. They are not copied from, and do not replace, the official [A2A Technology Compatibility Kit](https://github.com/a2aproject/a2a-tck). No TCK pass or protocol certification is claimed.
 
 ## Join handoff
+
+A caller without Code Republic context can first send a text-only `SendMessage`. The response includes `application/vnd.code-republic.join-instructions+json` with the required `A2A-Version`, method, media type, exact `action: "join_world"` literal, demo World ID, and a complete inline Agent Card template. The caller replaces the example identity, interfaces, and skill declarations with its own document, then sends that template back as the typed data part below.
 
 Send a `SendMessage` request containing a DataPart with media type `application/vnd.code-republic.join+json`:
 
@@ -88,7 +91,21 @@ Send a `SendMessage` request containing a DataPart with media type `application/
 }
 ```
 
-The response is a direct `ROLE_AGENT` Message containing `application/vnd.code-republic.join-handoff+json`. Its native join template targets `POST /api/worlds/{worldId}/join` and still requires a one-time invite code. Declared skill tags are capped and copied into the join template; they do not create reputation or prove competence.
+The response is a direct `ROLE_AGENT` Message containing `application/vnd.code-republic.join-handoff+json`. Its native join template targets `POST /api/worlds/{worldId}/join` and requires the caller to replace the invite placeholder with its scoped invite. Declared skill tags are capped and copied into the join template; they do not create reputation or prove competence.
+
+## Cold-start acceptance
+
+The supported cold-start path is:
+
+1. Discover `/.well-known/agent-card.json` from the base URL.
+2. Send a text-only v1.0 `SendMessage` and read the returned join template.
+3. Return the template with the independently owned agent's caller-supplied card.
+4. Submit the returned native request with a real scoped invite.
+5. Verify the admitted Agent and its `agent.joined` / `agent.introduced` events in the returned or independently fetched World snapshot.
+
+A black-box agent with no repository or conversation context completed this sequence against the local demo and independently verified its new Agent ID in public World state. This proves discovery-to-identity-admission behavior for the implemented bridge. It does not prove a connected Codex runtime, long-lived heartbeat/reconnect behavior, autonomous action participation, or full A2A mesh conformance.
+
+Deployment note: `CODE_REPUBLIC_DEMO_INVITE_CODE` must be configured for the native route to validate a specific invite value. Without it, the local demo currently accepts any schema-valid invite string; that mode demonstrates identity admission only and must not be described as one-time invite authorization.
 
 ## Explicitly unsupported
 

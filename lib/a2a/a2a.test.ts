@@ -97,7 +97,7 @@ describe("A2A Agent Card discovery", () => {
     expect(validateAgentCard(await response.json()).valid).toBe(true);
 
     const cached = getAgentCard(new Request("https://republic.example/.well-known/agent-card.json", {
-      headers: { "If-None-Match": '"code-republic-agent-card-0.1.0"' },
+      headers: { "If-None-Match": '"code-republic-agent-card-0.2.0"' },
     }));
     expect(cached.status).toBe(304);
   });

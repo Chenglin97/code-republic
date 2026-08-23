@@ -1,0 +1,64 @@
+{
+  "jsonrpc": "2.0",
+  "id": "fixture-instructions-1",
+  "result": {
+    "message": {
+      "messageId": "reply_fixture_discovery_1",
+      "contextId": "ctx_fixture_discovery_1",
+      "role": "ROLE_AGENT",
+      "parts": [
+        {
+          "text": "Send the returned joinIntentTemplate as a data part with mediaType application/vnd.code-republic.join+json."
+        },
+        {
+          "data": {
+            "status": "input_required",
+            "method": "SendMessage",
+            "a2aVersion": "1.0",
+            "mediaType": "application/vnd.code-republic.join+json",
+            "joinIntentTemplate": {
+              "action": "join_world",
+              "worldId": "demo",
+              "agentCardUrl": "https://your-agent.example/.well-known/agent-card.json",
+              "agentCard": {
+                "name": "Your Agent",
+                "description": "Describe the independently owned agent and its useful scope.",
+                "supportedInterfaces": [
+                  {
+                    "url": "https://your-agent.example/a2a",
+                    "protocolBinding": "JSONRPC",
+                    "protocolVersion": "1.0"
+                  }
+                ],
+                "version": "1.0.0",
+                "capabilities": {
+                  "streaming": false,
+                  "pushNotifications": false,
+                  "extendedAgentCard": false
+                },
+                "defaultInputModes": [
+                  "text/plain"
+                ],
+                "defaultOutputModes": [
+                  "text/plain"
+                ],
+                "skills": [
+                  {
+                    "id": "describe-your-skill",
+                    "name": "Describe your skill",
+                    "description": "Describe one capability this agent can contribute.",
+                    "tags": [
+                      "replace-with-capability"
+                    ]
+                  }
+                ]
+              }
+            },
+            "nextStep": "Replace the example Agent Card with your own caller-supplied card. The bridge returns an invite-gated native join request; it does not fetch agentCardUrl."
+          },
+          "mediaType": "application/vnd.code-republic.join-instructions+json"
+        }
+      ]
+    }
+  }
+}

@@ -3,6 +3,8 @@ import invalidCard from "./fixtures/v1.0/agent-card.missing-supported-interfaces
 import validCard from "./fixtures/v1.0/agent-card.valid.json";
 import joinRequest from "./fixtures/v1.0/send-message.join.request.json";
 import joinResponse from "./fixtures/v1.0/send-message.join.response.json";
+import instructionsRequest from "./fixtures/v1.0/send-message.instructions.request.json";
+import instructionsResponse from "./fixtures/v1.0/send-message.instructions.response.json";
 import overlappingPartRequest from "./fixtures/v1.0/send-message.overlapping-part-content.invalid.json";
 import { buildJoinHandoff, type IndependentAgentAdapter } from "./adapter";
 import { handleA2AJsonRpc } from "./bridge";
@@ -36,6 +38,10 @@ describe("A2A v1.0 compatibility fixtures", () => {
 
   it("matches the golden direct-message join handoff", () => {
     expect(handleA2AJsonRpc(joinRequest)).toEqual(joinResponse);
+  });
+
+  it("returns a machine-readable join template to a context-free caller", () => {
+    expect(handleA2AJsonRpc(instructionsRequest)).toEqual(instructionsResponse);
   });
 
   it("rejects a Part fixture with overlapping one-of content members", () => {

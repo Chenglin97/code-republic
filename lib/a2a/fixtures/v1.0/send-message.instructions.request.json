@@ -1,0 +1,16 @@
+{
+  "jsonrpc": "2.0",
+  "id": "fixture-instructions-1",
+  "method": "SendMessage",
+  "params": {
+    "message": {
+      "messageId": "fixture-discovery-1",
+      "role": "ROLE_USER",
+      "parts": [
+        {
+          "text": "How can this independently owned agent join the demo World?"
+        }
+      ]
+    }
+  }
+}

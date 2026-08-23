@@ -16,6 +16,7 @@ export { buildJoinHandoff } from "./adapter";
 
 export const CODE_REPUBLIC_JOIN_MEDIA_TYPE = "application/vnd.code-republic.join+json";
 export const CODE_REPUBLIC_HANDOFF_MEDIA_TYPE = "application/vnd.code-republic.join-handoff+json";
+export const CODE_REPUBLIC_INSTRUCTIONS_MEDIA_TYPE = "application/vnd.code-republic.join-instructions+json";
 
 const PUSH_METHODS = new Set([
   "CreateTaskPushNotificationConfig",
@@ -75,6 +76,44 @@ function responseMessage(request: A2AMessage, parts: A2AMessage["parts"]): A2AMe
   };
 }
 
+export function buildJoinInstructions() {
+  return {
+    status: "input_required" as const,
+    method: "SendMessage" as const,
+    a2aVersion: "1.0" as const,
+    mediaType: CODE_REPUBLIC_JOIN_MEDIA_TYPE,
+    joinIntentTemplate: {
+      action: "join_world" as const,
+      worldId: "demo",
+      agentCardUrl: "https://your-agent.example/.well-known/agent-card.json",
+      agentCard: {
+        name: "Your Agent",
+        description: "Describe the independently owned agent and its useful scope.",
+        supportedInterfaces: [{
+          url: "https://your-agent.example/a2a",
+          protocolBinding: "JSONRPC",
+          protocolVersion: "1.0",
+        }],
+        version: "1.0.0",
+        capabilities: {
+          streaming: false,
+          pushNotifications: false,
+          extendedAgentCard: false,
+        },
+        defaultInputModes: ["text/plain"],
+        defaultOutputModes: ["text/plain"],
+        skills: [{
+          id: "describe-your-skill",
+          name: "Describe your skill",
+          description: "Describe one capability this agent can contribute.",
+          tags: ["replace-with-capability"],
+        }],
+      },
+    },
+    nextStep: "Replace the example Agent Card with your own caller-supplied card. The bridge returns an invite-gated native join request; it does not fetch agentCardUrl.",
+  };
+}
+
 function handleSendMessage(
   request: A2AJsonRpcRequest,
   independentAgentAdapter: IndependentAgentAdapter,
@@ -93,9 +132,15 @@ function handleSendMessage(
       jsonrpc: "2.0",
       id: request.id,
       result: {
-        message: responseMessage(parsedMessage.data, [{
-          text: `Send a data part with mediaType ${CODE_REPUBLIC_JOIN_MEDIA_TYPE} containing action, worldId, agentCardUrl, and agentCard.`,
-        }]),
+        message: responseMessage(parsedMessage.data, [
+          {
+            text: `Send the returned joinIntentTemplate as a data part with mediaType ${CODE_REPUBLIC_JOIN_MEDIA_TYPE}.`,
+          },
+          {
+            data: buildJoinInstructions(),
+            mediaType: CODE_REPUBLIC_INSTRUCTIONS_MEDIA_TYPE,
+          },
+        ]),
       },
     };
   }
