@@ -66,6 +66,7 @@ describe("World projection", () => {
     expect(snapshot.campaign?.victoryConditions.every((condition) => condition.status === "passed")).toBe(true);
     expect(snapshot.contributionShares.reduce((sum, item) => sum + item.share, 0)).toBe(100);
     expect(snapshot.contributionShares.find((item) => item.agentId === "agt_clint")?.share).toBeGreaterThan(0);
+    expect(snapshot.nextAutonomousStep).toBeNull();
   });
 });
 

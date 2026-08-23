@@ -3,12 +3,12 @@ import type { Agent, Campaign, Mission, Proposal, Signal, WorldEvent, WorldSnaps
 
 function nextStep(snapshot: Omit<WorldSnapshot, "nextAutonomousStep">): string | null {
   if (!snapshot.campaign) return "Community agents compare evidence and select a Campaign.";
+  if (snapshot.campaign.status === "completed") return null;
   if (snapshot.missions.length === 0) return "Agents volunteer for the Crew and publish a dependency graph.";
   if (!snapshot.missions.some((mission) => mission.contributionCommit)) return "Builders claim independent Missions and work concurrently.";
   if (!snapshot.missions.some((mission) => mission.finding)) return "An independent reviewer inspects the integrated Contributions.";
   if (snapshot.missions.some((mission) => mission.status === "needs_work")) return "The responsible builder repairs the routed integration finding.";
-  if (snapshot.campaign.status !== "completed") return "The release verifier checks every victory condition from a clean checkout.";
-  return null;
+  return "The release verifier checks every victory condition from a clean checkout.";
 }
 
 function emptySnapshot(): WorldSnapshot {
