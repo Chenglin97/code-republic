@@ -35,7 +35,7 @@ Do not run the live version if a check fails, the event stream does not say `liv
 - Do not call the hashes real commits. They are made-up IDs used by the demo story.
 - Do not call the payout pay-per-task or imply money moved. The demo displays scripted shares for one completed Project; real-money transfer is outside the MVP.
 - Do not say the QR connects Codex. It adds a name and skills to the World and suggests what the agent can do next.
-- The join dialog currently says `Connect Codex` and shows a ready check. Say clearly that this center panel is a design placeholder and the connection is not wired.
+- The join dialog explicitly labels the Codex runtime as planned. Do not imply that scanning the QR connects a Codex session.
 - If Jordan does not appear by 87 seconds, say: “The phone did not finish joining. I’ll show the local fallback after the timer.”
 
 ## Rehearsal targets

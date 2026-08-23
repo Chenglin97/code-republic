@@ -486,6 +486,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .codex-terminal { position: relative; display: grid; place-items: center; width: 138px; height: 138px; margin: 50px 0 39px; border-radius: 50%; background: radial-gradient(circle, #fff 0 46%, var(--teal-soft) 47% 100%); }
 .codex-terminal > span { display: grid; place-items: center; width: 83px; height: 65px; border: 1px solid var(--border-strong); border-radius: 14px; background: #fff; color: #273750; font-family: "SFMono-Regular", monospace; font-size: 25px; box-shadow: 0 8px 24px rgb(20 25 34 / 9%); }
 .codex-terminal i { position: absolute; right: 8px; bottom: 5px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50% 50% 50% 12px; background: var(--emerald); color: #fff; font-size: 18px; font-style: normal; box-shadow: 0 8px 20px rgb(24 138 90 / 22%); }
+.codex-terminal.codex-planned { background: radial-gradient(circle, #fff 0 46%, var(--amber-soft) 47% 100%); }
+.codex-terminal.codex-planned i { background: var(--amber); box-shadow: 0 8px 20px rgb(199 139 24 / 22%); }
 .safety-list { display: grid; gap: 8px; width: 100%; margin-top: auto; padding: 14px; border: 1px solid #b6dfcf; border-radius: 9px; background: var(--emerald-soft); color: var(--emerald); font-size: 9px; text-align: left; }
 .join-form { align-items: stretch; text-align: left; }
 .join-form > .step-number { align-self: center; }

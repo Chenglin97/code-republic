@@ -15,8 +15,8 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 | Join page and API | Works | `/join` and `POST /api/worlds/demo/join` add an agent, save its skills, and suggest a next step. |
 | QR code | Works only with the right URL | It uses the URL in the presenter browser. We still need to test it with a real phone on the final Wi-Fi or public URL. |
 | A2A | Partly works | The Agent Card and invite-gated `SendMessage` handoff work. Tasks, streaming, push, signatures, remote card fetching, and full support do not. |
-| Website | Polished at 1280×720; final resolution still unverified | On current main, World, Problems, Campaigns, Missions, Timeline, Agents, and the join dialog rendered cleanly in the browser after a full reload. A stale dev hot reload briefly left the new Missions section unstyled; reloading fixed it. The required 1920×1080 presenter view still needs a visual check. |
-| Join dialog wording | Misleading; fix or label before demo | The dialog says `Connect Codex` and shows `Codex connection ready`, but the connection is not wired. The presenter and recording must call the center panel a placeholder. Prefer a UI fix before judging. |
+| Website | Verified at presenter resolution | World, Problems, Campaigns, Missions, Timeline, Agents, and the join dialog rendered at 1920×1080 with no horizontal overflow or browser console errors. |
+| Join dialog wording | Honest | The dialog labels the Codex runtime as planned, says no session is connected, and explains that the demo creates only the Agent identity. |
 | Design images | Checked | All nine PNG files are valid 1536×1024 images. They show the intended design, not proof that the website works. |
 | Real Codex runner | Not built | There is no Codex SDK or CLI connection, saved Codex thread, runner process, or real parallel coding. |
 | Real or saved Greptile review | Not built | The review is written directly into the demo step. There is no Greptile result file. |
@@ -42,9 +42,9 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 - [ ] `node demo/control.mjs preflight` returns four successful checks.
 - [ ] `node demo/control.mjs stage signal` works.
 - [ ] Six clicks on `Advance agents` reach the completed release, and the shares add to 100.
-- [ ] The website looks finished at 1920×1080.
-- [ ] Problems, Campaigns, Missions, Timeline, Agents, and the join dialog have all been checked in the browser.
-- [ ] The join dialog no longer says the Codex connection is ready, or the presenter explicitly calls that panel a placeholder while `CODEX CONNECTION NOT WIRED` is visible.
+- [x] The website looks finished at 1920×1080.
+- [x] Problems, Campaigns, Missions, Timeline, Agents, and the join dialog have all been checked in the browser.
+- [x] The join dialog labels the Codex runtime as planned and does not claim that a session is connected.
 - [ ] The event stream says `live` during one full rehearsal.
 - [ ] The presenter URL is not `localhost`, `127.0.0.1`, or `0.0.0.0`.
 - [ ] A real phone scans the QR, submits the form, and the presenter sees the new agent.
@@ -64,4 +64,4 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 
 ## Current answer
 
-**Do not say the full autonomous loop works yet.** We can honestly show a real shared World, its rules, its history, and the join flow. The coding and review steps are scripted examples. Before judges see the live version, correct or clearly label the join dialog's Codex placeholder, check the UI at 1920×1080, rerun CI, and test the QR with a phone.
+**Do not say the full autonomous loop works yet.** We can honestly show a real shared World, its rules, its history, and the join flow. The coding and review steps are scripted examples. Before judges see the live version, rerun the final preflight and test the QR with a real phone on the presentation network.

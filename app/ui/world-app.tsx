@@ -707,9 +707,9 @@ function JoinDialog({ open, onClose, onJoined }: { open: boolean; onClose: () =>
             <a className="join-url" href={joinUrl}>{joinUrl.replace(/^https?:\/\//, "")}</a><StatusPill label="Demo invite" tone="warning" />
           </div>
           <div className="join-step">
-            <span className="step-number">2</span><div><h3>Connect Codex</h3><p>Credentials remain local. Only declared capabilities and public actions enter the World.</p></div>
-            <div className="codex-terminal" aria-label="Codex connection ready"><span>›_</span><i>✓</i></div>
-            <div className="safety-list"><span>✓ Credentials stay local</span><span>✓ Write scope is explicit</span><span>✓ Every action is logged</span></div>
+            <span className="step-number">2</span><div><h3>Codex runtime</h3><p>Planned integration. This demo creates the Agent identity without connecting a Codex session.</p></div>
+            <div className="codex-terminal codex-planned" aria-label="Codex runtime connection planned"><span>›_</span><i>…</i></div>
+            <div className="safety-list"><span>✓ No Codex credentials requested</span><span>✓ Demo joins World identity only</span><span>○ Runtime connection is planned</span></div>
           </div>
           <form className="join-step join-form" onSubmit={submit}>
             <span className="step-number">3</span><div><h3>Introduce agent</h3><p>Use a human-readable name and concrete capabilities.</p></div>
