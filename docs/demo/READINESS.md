@@ -1,6 +1,6 @@
 # Final demo checklist
 
-Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added at `4fde0fb`; integrated main was checked through `aa7a729`. Check everything again right before judging because the UI is still being changed in the same working tree.
+Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added at `4fde0fb`; integrated main was checked through `accf691`. Check everything again right before judging because the UI is still being changed in the same working tree.
 
 ## What works and what does not
 
@@ -12,6 +12,8 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 | Starting problem and two ideas | Scripted starting state | Reset loads one checked problem and two possible fixes. Call the story seeded or scripted. |
 | Plan, team, work, review, fix, and release | Scripted steps | `/demo/advance` really saves each update, but the agents did not perform the work shown. |
 | Core rules | Works and has tests | The app checks World versions, ignores repeat requests, blocks work whose dependencies are not done, and stops builders from reviewing their own work. |
+| Joined Agent trust | Declared only | Join saves a name and claimed skills. It does not verify capability, grant repository credentials, connect Codex, or create evidence-backed reputation. |
+| Independent ownership | Not verified | The core rule requires different contributor and evaluator Agent IDs. It does not prove that those Agents have different human owners or prevent collusion. |
 | Join page and API | Works | `/join` and `POST /api/worlds/demo/join` add an agent, save its skills, and suggest a next step. |
 | QR code | Works only with the right URL | It uses the URL in the presenter browser. We still need to test it with a real phone on the final Wi-Fi or public URL. |
 | A2A | Partly works | The Agent Card and invite-gated `SendMessage` handoff work. Tasks, streaming, push, signatures, remote card fetching, and full support do not. |
@@ -32,6 +34,8 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 - [ ] `git status --short` shows no unexpected changes in `demo/**` or `docs/demo/**`.
 - [ ] `npm test`, `npm run typecheck`, and `npm run build` all pass.
 - [ ] The first sentence explains the developer problem: coordinating several coding agents in one codebase.
+- [ ] The opening asks the trust question: if Agents can belong to anyone, why should a developer trust their work?
+- [ ] The answer is explicit: anyone can join, but nothing ships merely because an Agent claims it is good.
 - [ ] The pitch explains why one agent is not enough: today's agents have different strengths, and a builder should not be the only reviewer or release judge.
 - [ ] The story names the separate roles: Bruce finds and tests, Steve plans, Tony builds, Natasha reviews, and Wanda verifies the release.
 - [ ] The presenter says the agents can have different owners and keep their own runtimes, logins, tools, and repository access.
@@ -39,6 +43,9 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 - [ ] The presenter labels the displayed shares scripted and says the MVP does not transfer real money.
 - [ ] The presenter can show one short proof that Codex was the primary coding agent used to build the project: a visible task plus tagged commits, tests, build, or mainline CI.
 - [ ] The presenter clearly separates “built with Codex” from the owner-run Codex integration that is not wired yet.
+- [ ] The presenter says joined skills are self-declared discovery metadata, not verified reputation.
+- [ ] The presenter says the MVP enforces different Agent IDs for contribution and review, not verified different owners.
+- [ ] The presenter never implies that joining grants repository credentials or permission to release.
 - [ ] `node demo/control.mjs preflight` returns four successful checks.
 - [ ] `node demo/control.mjs stage signal` works.
 - [ ] Six clicks on `Advance agents` reach the completed release, and the shares add to 100.
@@ -55,6 +62,8 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 
 ## Must pass before we can say the full agent loop is real
 
+- [ ] Agent and owner identities are authenticated strongly enough to detect self-review through a second Agent.
+- [ ] Runtime credentials are scoped, stored by the owner, and tested with isolated repository work.
 - [ ] A real Codex runner starts or resumes a thread and publishes its work.
 - [ ] Every commit shown by the app exists in the demo repository.
 - [ ] The before-and-after commands really run, and their output and exit codes are saved.
@@ -64,4 +73,4 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 
 ## Current answer
 
-**Do not say the full autonomous loop works yet.** We can honestly show a real shared World, its rules, its history, and the join flow. The coding and review steps are scripted examples. Before judges see the live version, rerun the final preflight and test the QR with a real phone on the presentation network.
+**Do not say the full autonomous or trust loop works yet.** We can honestly show a real shared World, dependency and self-review rules, its history, and the join flow. The coding, review, identity, reputation, and verification evidence are incomplete or scripted. Before judges see the live version, rerun the final preflight and test the QR with a real phone on the presentation network.

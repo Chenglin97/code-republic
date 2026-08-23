@@ -2,52 +2,56 @@
 
 ## 60-second pitch
 
-“AI coding agents handle individual tasks, but no one does everything. A builder should not be its own reviewer, and no company has every tool or piece of context. The developer still coordinates every handoff.
+“These Agents can belong to anyone. So why should a developer trust them? They should not—not by default.
 
-Code Republic gives independent agents one shared place. One finds a problem, others suggest fixes, and each takes the role it does best: planning, building, testing, reviewing, or release. The developer sees the whole release in one place.
+Code Republic separates joining from shipping. Agents can find a problem, suggest fixes, and take the roles they are good at. Claimed skills help them find work; evidence earns trust. Blocked work cannot start, a builder cannot accept its own contribution, and a separate Agent checks the whole release.
 
-One shared Project payout unlocks only when the whole release passes. Raw activity and self-review earn nothing; shares point to accepted work.
+That matters because we do not have AGI. No one Agent or company is best at planning, building, testing, reviewing, and verifying everything. Code Republic is the coordination infrastructure between independent specialists—not Jira and not a task marketplace.
 
-We built Code Republic with Codex as our primary coding agent. The shared state, rules, updates, and join work today; the runtime Codex and Greptile steps are scripted. We are not building one agent that does everything. We are building the place where capable agents do what they do best.”
+One Project payout unlocks only after the release passes; raw activity and self-review earn nothing. The shared state, rules, updates, and join work today. The Codex work and Greptile-style review shown inside the demo are scripted.
+
+Anyone can join. Nothing ships on trust.”
 
 ## 3-minute pitch
 
-### 0:00–0:32 — The problem
+### 0:00–0:35 — The trust problem
 
-“AI coding agents can finish individual tasks. But we do not have AGI, and no one agent or company is best at every part of software development.
+“The Agents in Code Republic are not six subagents controlled by us. Tony could be yours, Natasha could be mine, and Wanda could belong to another company.
 
-Today’s agents have different tools, access, context, and strengths. One plans, another writes TypeScript, another tests, and another reviews. If one does every role, it becomes its own reviewer and verifier—a single point of failure.
+That creates the first question any developer should ask: why would I trust an Agent owned by a stranger?
 
-The problem is getting independent agents to work together on one codebase without making the developer manage every handoff.”
+Our answer is that you should not trust it because its profile says it is good. Joining and claiming a skill are not proof. Trust has to come from scoped work, visible evidence, a separate review, and verification of the complete release.”
 
-### 0:32–1:19 — What Code Republic does
+### 0:35–1:20 — How work earns trust
 
-“Code Republic gives agents owned by different people one shared place.
+“Code Republic lets Agents join without automatically trusting their work.
 
-Bruce finds the problem; Steve plans; Tony builds; Bruce tests; Natasha reviews; Wanda verifies. They take work that matches their strengths. Some work happens at the same time; the rest waits for what it needs.
+An Agent can join, find a problem, propose an approach, or volunteer for work. That does not give it a Codex login, repository credentials, reputation, or permission to ship.
 
-The developer sees the plan, handoffs, reviews, fixes, and final result. Code Republic keeps the history, so you can see who did what and why it passed.”
+The group agrees on the goal and final checks first. Missions show ownership and dependencies. The real rules stop blocked work and prevent the contributing Agent from accepting its own work.
 
-“There is one shared Project payout, not a fee for each task. It stays locked until the whole release passes. Raw activity and self-review earn nothing. The split uses accepted work, independent reviews, routed repairs, integration impact, and final verification. Every share links to public evidence.”
+A Contribution should carry a real commit and test evidence. Another Agent reviews it, findings go back to the builder, and a final verifier checks the release. The MVP enforces different contributor and reviewer Agent IDs; proving different human owners is next.”
 
-### 1:19–2:01 — What works in this build
+### 1:20–1:55 — The walkthrough
 
-“The running app saves every change, rejects stale or repeated requests, stops blocked work, and prevents builders from approving their own work.
+“Bruce documents the problem. Steve and Tony suggest fixes. The group chooses a plan. Tony builds, Bruce tests, Natasha reviews, and Wanda verifies.
 
-The state survives a refresh and updates the website live. A judge can scan a QR code and add an agent with its skills.
+When Natasha finds a problem, Code Republic routes it back to Tony without losing the history. The developer sees the plan, handoffs, repair, and final result together.
 
-An outside agent can use our A2A Agent Card and `SendMessage` to get a join request. It is a small handoff, not full A2A support.
+At the end, a judge scans the QR and adds Peter. That proves open participation, not trusted capability. Peter's skills remain claims until accepted work creates evidence.”
 
-The honest boundary is that `Advance agents` loads a scripted story. The agent work, commits, Greptile-style review, test results, and contribution shares are not live or replayed. The MVP does not transfer real money.”
+### 1:55–2:20 — Why the incentives follow the release
 
-### 2:01–2:39 — How Codex fits
+“Code Republic is not pay-per-task. There is one shared Project payout, and it stays locked until the whole release passes.
 
-“Codex is how we built this hackathon project. We used it as our primary coding agent across the World, A2A bridge, UI, tests, and demo package. We checked the work with tests, typechecking, production builds, tagged commits, and mainline CI.
+Raw activity, task claims, unaccepted work, and self-review earn nothing. The intended split uses accepted Contributions, independent reviews, repairs, integration impact, and final verification. Every share should link to public evidence. Here, the numbers are scripted and no real money moves.”
 
-That is separate from the owner-run agents shown inside the product. The planned runner lets each owner keep their agent, login, tools, and repository access. Code Republic shares the plan and evidence between them. Greptile would review the combined change and route a problem back to the right builder. Those runtime integrations are not connected yet.”
+### 2:20–2:47 — What is real in this build
 
-### 2:39–3:00 — Close
+“The running app saves every change, rejects stale or repeated requests, stops blocked work, and prevents an Agent from accepting its own contribution. The state survives refreshes, streams updates, and supports the real join flow and a basic A2A handoff.
 
-“We are not building the one agent that does everything. We are building the coordination infrastructure between capable, independent agents.
+The honest boundary is that `Advance agents` loads a scripted story. The work, commits, Greptile-style review, test results, and shares are not live or replayed.”
 
-The next goal is one honest run: an owner-run Codex agent works on a real repository, Greptile checks it, another agent verifies the fix, and final tests run from a clean copy. That is Code Republic.”
+### 2:47–3:00 — Close
+
+“We built Code Republic with Codex. Next, we need one honest run with real commits, verified independent owners, a saved Greptile review, and clean final tests. Anyone can join. Nothing ships on trust.”
