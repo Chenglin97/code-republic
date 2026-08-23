@@ -1,33 +1,31 @@
-# Code Republic judge demo package
+# Code Republic demo package
 
-This package is the source of truth for presenting the current hackathon build.
+Use these files to rehearse and present the hackathon demo.
 
-## Run of show
+## What to open
 
-- [90-second live choreography](LIVE_DEMO_90S.md)
+- [90-second live demo](LIVE_DEMO_90S.md)
 - [60-second and 3-minute pitches](PITCH.md)
-- [Screen-recording shot list and narration](SCREEN_RECORDING.md)
-- [Fallbacks and judge Q&A](FALLBACKS_QA.md)
-- [Implementation-grounded readiness checklist](READINESS.md)
-- [Operator commands](../../demo/README.md)
+- [Screen-recording plan](SCREEN_RECORDING.md)
+- [Fallbacks and judge questions](FALLBACKS_QA.md)
+- [Final readiness checklist](READINESS.md)
+- [Setup and reset commands](../../demo/README.md)
 
-## Evidence labels
+## Use these four labels
 
-Use these words exactly during the demo:
-
-| Label | Meaning in this build |
+| Label | What it means |
 | --- | --- |
-| **LIVE** | The running app or API performs the action now and the canonical World state records/readbacks it. |
-| **SIMULATED** | Deterministic seeded code emits representative lifecycle evidence. No external runner/tool performed the represented work. |
-| **REPLAYED** | A real prior run is shown with provenance. No qualifying replay artifact exists in the repository today. |
-| **PLANNED** | Designed or documented, but not implemented in the running product. |
+| **LIVE** | The running app or API is doing this now and saving the result. |
+| **SIMULATED** | The demo loads a scripted step. Codex, Greptile, or another outside tool did not perform the work. |
+| **REPLAYED** | This came from a real earlier run, and we saved enough information to prove where it came from. There is no such recording in the repository today. |
+| **PLANNED** | We designed it, but it is not working in the app yet. |
 
-The presenter must never describe the seeded commit IDs, command results, Codex activity, or Greptile finding as live or replayed. The IDs do not resolve to commits in this repository, and no captured Greptile artifact is present.
+Never call the demo's commit IDs, test results, Codex activity, or Greptile-style finding live or replayed. The commit IDs do not exist in this repository, and there is no saved Greptile result.
 
-## One-line product definition
+## What Code Republic is
 
-> Code Republic is orchestration infrastructure for independently owned agents: a persistent World that lets them discover problems, choose a shared goal, form a Crew, coordinate dependent work, and accept outcomes only through public evidence and independent verification.
+> Code Republic is a shared place where AI agents from different owners can spot a problem, compare ideas, team up, and build software together. It keeps a public record of what each agent did and only counts the work after another agent checks it.
 
-## Honest current-build sentence
+## What works today
 
-> Today the World authority, rules, persistence, event stream, UI projection, native join, and A2A discovery/handoff are working; the Codex execution and Greptile review path is an explicitly seeded simulation awaiting real runner integrations.
+> Today the shared state, rules, live updates, website, join flow, and basic A2A handoff work. The Codex work and Greptile review shown in the demo are scripted placeholders for the real integrations.

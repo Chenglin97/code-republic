@@ -1,58 +1,56 @@
-# Final demo readiness
+# Final demo checklist
 
-Audit baseline: nested repository `code-republic`; `[EPIC-DEMO]` registration at `4fde0fb`; integrated main observed through `aa7a729`. This checklist must be refreshed immediately before judging because UI work is continuing in the same working tree.
+Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added at `4fde0fb`; integrated main was checked through `aa7a729`. Check everything again right before judging because the UI is still being changed in the same working tree.
 
-## Current evidence matrix
+## What works and what does not
 
-| Area | Status | Evidence and presenter consequence |
+| Area | Status | What we found |
 | --- | --- | --- |
-| `[EPIC-DEMO]` CI tag | Ready | `docs/EPICS.md` and `.github/workflows/main.yml` accept the tag at `4fde0fb`. |
-| World authority and persistence | Implemented | Snapshot, action, SSE, reset, advance, and join routes use the append-only World authority and JSON event storage. |
-| Signal and two proposals | Implemented as seeded state | Reset projects one validated Signal and two competing proposals. Label the scenario seeded. |
-| Campaign, Crew, Missions, review, repair, release | Implemented as scripted demo transitions | `/demo/advance` appends deterministic events. State mutation is live; represented agent work is simulated. |
-| Core rules | Implemented and covered by tests | Optimistic versioning, idempotency, dependency-aware claim checks, and independent-review checks exist. Re-run CI commands before presenting. |
-| Native join | Implemented | `/join` and `POST /api/worlds/demo/join` create an Agent, publish capabilities, and return a suggested action. |
-| QR transport | Implemented but environment-dependent | QR derives from `window.location.origin`. A phone test on the final LAN/public URL is still required. |
-| A2A | Partial implementation | Agent Card plus invite-gated `SendMessage` handoff; not tasks, streaming, push, signatures, remote-card fetch, or full conformance. |
-| Product UI | In progress at audit time | World, Signals, Campaigns, Missions, and Chronicle were styled in the live browser. Agent cards were still browser-default controls and the join dialog was not visible in the captured viewport, because the UI-owned CSS ended before those components. Do not judge-present until UI integration is committed and all views are rechecked. |
-| Design suite | Verified design specification | Nine PNGs are valid 1536×1024 images. They are design references, not running-product evidence. |
-| Live Codex runner | Not implemented | No Codex SDK/CLI integration, persistent thread reference, runner process, or real concurrent execution was found. |
-| Live/captured Greptile | Not implemented | The finding is hard-coded in the demo transition and no captured Greptile artifact exists. |
-| Real repository evidence | Not implemented in demo lifecycle | Seed base/result hashes do not resolve to commits in this repository. |
-| Final clean-checkout verifier | Not implemented | Command strings and exit codes are seeded event payloads; no executor runs them. |
-| Contribution shares | Implemented projection over seeded input | Shares total 100 in the completed scripted state, but are not derived from real accepted external evidence yet. |
-| Replayed fallback | Not available | No artifact meets the provenance requirements. Use the simulated label, never replayed. |
-| Root status documentation | Stale | `README.md` still says implementation has not started, while the app and APIs exist. Do not hand that sentence to judges as current status. |
-| Seed-count documentation | Stale | `MVP_ACCEPTANCE.md` says four persistent Agents plus a fifth judge Agent; reset currently seeds six, and a judge join becomes the seventh. |
+| `[EPIC-DEMO]` commit tag | Ready | `docs/EPICS.md` and the main CI workflow accept the tag. |
+| World data and history | Works | The app has snapshot, action, SSE, reset, advance, and join routes. It stores the World as a list of events in JSON. |
+| Starting problem and two ideas | Scripted starting state | Reset loads one checked problem and two possible fixes. Call the story seeded or scripted. |
+| Plan, team, work, review, fix, and release | Scripted steps | `/demo/advance` really saves each update, but the agents did not perform the work shown. |
+| Core rules | Works and has tests | The app checks World versions, ignores repeat requests, blocks work whose dependencies are not done, and stops builders from reviewing their own work. |
+| Join page and API | Works | `/join` and `POST /api/worlds/demo/join` add an agent, save its skills, and suggest a next step. |
+| QR code | Works only with the right URL | It uses the URL in the presenter browser. We still need to test it with a real phone on the final Wi-Fi or public URL. |
+| A2A | Partly works | The Agent Card and invite-gated `SendMessage` handoff work. Tasks, streaming, push, signatures, remote card fetching, and full support do not. |
+| Website | Still being finished at the time of review | World, Signals, Campaigns, Missions, and Chronicle were styled. Agent cards still looked like default browser buttons, and the join dialog did not appear in the screenshot. Do not show judges the live app until every page has been checked again. |
+| Design images | Checked | All nine PNG files are valid 1536×1024 images. They show the intended design, not proof that the website works. |
+| Real Codex runner | Not built | There is no Codex SDK or CLI connection, saved Codex thread, runner process, or real parallel coding. |
+| Real or saved Greptile review | Not built | The review is written directly into the demo step. There is no Greptile result file. |
+| Real commits | Not in the demo | The starting and ending hashes shown by the story do not exist in this repository. |
+| Final test runner | Not built | The test commands and exit codes are text in the demo events. The app does not run them. |
+| Contribution shares | Display works; numbers are scripted | The final numbers add to 100, but they do not come from real checked work yet. |
+| Saved replay | None | Do not use the word replayed. |
+| Root `README.md` | Out of date | It says implementation has not started even though the app and APIs exist. Do not use that sentence with judges. |
+| Agent count in `MVP_ACCEPTANCE.md` | Out of date | The document says four starting agents plus the judge. The app starts with six; the judge becomes number seven. |
 
-## Go/no-go checklist
+## Must pass before showing the live 90-second demo
 
-### Required before presenting the live 90-second path
+- [ ] `git status --short` shows no unexpected changes in `demo/**` or `docs/demo/**`.
+- [ ] `npm test`, `npm run typecheck`, and `npm run build` all pass.
+- [ ] `node demo/control.mjs preflight` returns four successful checks.
+- [ ] `node demo/control.mjs stage signal` works.
+- [ ] Six clicks on `Advance agents` reach the completed release, and the shares add to 100.
+- [ ] The website looks finished at 1920×1080.
+- [ ] Signals, Campaigns, Missions, Chronicle, Agents, and the join dialog have all been checked in the browser.
+- [ ] The event stream says `live` during one full rehearsal.
+- [ ] The presenter URL is not `localhost`, `127.0.0.1`, or `0.0.0.0`.
+- [ ] A real phone scans the QR, submits the form, and the presenter sees the new agent.
+- [ ] Reset removes the rehearsal agent and returns to the exact starting step.
+- [ ] Every scripted part is labeled or explained. Nothing scripted is called live or replayed.
+- [ ] No API key, personal information, terminal history, or notification appears.
+- [ ] The presenter completes two rehearsals between 88 and 90 seconds.
 
-- [ ] `git status --short` shows no unexpected overlap in `demo/**` or `docs/demo/**`.
-- [ ] `npm test`, `npm run typecheck`, and `npm run build` pass on the integrated tree.
-- [ ] `node demo/control.mjs preflight` reports four passing HTTP checks.
-- [ ] `node demo/control.mjs stage signal` succeeds.
-- [ ] Six UI advances reach completed state and shares total 100.
-- [ ] The browser is visually styled and matches the accepted light UI direction at 1920×1080.
-- [ ] Signals, Campaigns, Missions, Chronicle, Agents, and the join dialog are visually inspected.
-- [ ] Event stream reads `live` throughout one full rehearsal.
-- [ ] The final base URL is not loopback-only.
-- [ ] A real phone scans the displayed QR, submits the native join, and the presenter UI shows the new Agent.
-- [ ] Reset removes the rehearsal Agent and returns exactly to the seeded opening state.
-- [ ] All simulated evidence labels are visible/read aloud; no claim calls it live or replayed.
-- [ ] No API keys, invite secrets beyond the demo code, personal data, terminal history, or notifications appear.
-- [ ] Presenter completes two rehearsals between 88 and 90 seconds.
+## Must pass before we can say the full agent loop is real
 
-### Required before upgrading any evidence claim
+- [ ] A real Codex runner starts or resumes a thread and publishes its work.
+- [ ] Every commit shown by the app exists in the demo repository.
+- [ ] The before-and-after commands really run, and their output and exit codes are saved.
+- [ ] Greptile runs live, or we save a real result with the time, repository, commit, request, output, and checksum.
+- [ ] The final tests run from a clean copy of the repository.
+- [ ] Reputation and shares point back to real work and reviews that the World accepted.
 
-- [ ] A Codex runner starts/resumes a real thread and publishes scoped artifacts.
-- [ ] Displayed base/result commits resolve in the seeded repository.
-- [ ] Before/after commands execute and their output is captured with exit codes.
-- [ ] Greptile runs live or a capture records provenance, timestamp, repository, commit, request, result, and checksum.
-- [ ] Final verification runs from a clean checkout.
-- [ ] Reputation/share inputs link to accepted real Evaluation events.
+## Current answer
 
-## Current verdict
-
-**Not ready to claim the full autonomous P0 loop.** It is safe to present as a working coordination authority and join surface with an explicitly seeded execution/review simulation, after the UI styling, integrated CI, and judge-phone QR checks pass.
+**Do not say the full autonomous loop works yet.** We can honestly show a real shared World, its rules, its history, and the join flow. The coding and review steps are scripted examples. Before judges see the live version, finish the remaining UI, rerun CI, and test the QR with a phone.

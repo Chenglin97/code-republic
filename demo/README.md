@@ -1,8 +1,8 @@
-# Demo operator commands
+# Demo commands
 
-Run every command from the nested `code-republic` repository.
+Run these commands from the nested `code-republic` repository.
 
-## Start on a judge-reachable URL
+## Start the app so a judge's phone can reach it
 
 ```bash
 cd "/Users/chenglin/Documents/ChatGPT/greptile hackathon/code-republic"
@@ -10,7 +10,7 @@ npm ci
 CODE_REPUBLIC_DEMO_INVITE_CODE=FAST-2026 npm run dev -- --hostname 0.0.0.0
 ```
 
-In a second terminal, resolve the Mac's Wi-Fi address and use it for both the browser and demo control. If `en0` is not the active interface, try `en1`.
+In a second terminal, get the Mac's Wi-Fi address. Use that address in both the presenter browser and the demo tool. If `en0` is not your Wi-Fi connection, try `en1`.
 
 ```bash
 DEMO_LAN_IP="$(ipconfig getifaddr en0)"
@@ -19,11 +19,11 @@ node demo/control.mjs preflight
 open "$CODE_REPUBLIC_BASE_URL"
 ```
 
-Opening the UI as `localhost` makes the generated QR code point back to the judge's phone, not the presenter laptop. Use the LAN URL or an already-approved public HTTPS tunnel. Put the phone and laptop on the same network and test before judging.
+Do not open the presenter page as `localhost`. If you do, the QR code will also contain `localhost`, which points the judge's phone back to itself instead of your laptop. Use the Wi-Fi address or an approved public HTTPS tunnel. Test the final QR with a real phone before judging.
 
-## Rehearsal states
+## Put the demo at a specific step
 
-`stage` resets the World and then applies the minimum number of scripted demo advances. It is destructive to the current demo event log.
+The `stage` command clears the current demo run and loads the requested step.
 
 ```bash
 node demo/control.mjs stage signal
@@ -35,30 +35,39 @@ node demo/control.mjs stage repair
 node demo/control.mjs stage verified
 ```
 
-Reload the browser after using `stage`. A browser that was already following a higher World version cannot infer that an external reset deliberately moved the demo back to the seeded version.
+Reload the browser after using `stage`. The browser may still be following the version from the previous run.
 
-For the live 90-second path:
+To prepare the 90-second demo:
 
 ```bash
 node demo/control.mjs stage signal
 ```
 
-Then use the UI's `Advance agents` button six times. The first advance ratifies the Campaign; the next five form the Crew, emit concurrent-work evidence, route review, repair it, and complete verification.
+Then click `Advance agents` six times during the demo:
 
-## QR fallback and readback
+1. The agents agree on a plan.
+2. They form a team and lay out the work.
+3. Tony and Maya submit work at the same time.
+4. The review finds a problem and sends it back to Tony.
+5. Tony fixes it.
+6. The final checks pass and the release is recorded.
 
-The primary path is the judge scanning the on-screen QR and submitting the join form. The local HTTP fallback below proves the same native join endpoint, but must be called a local fallback—not a judge phone scan or a live Codex connection.
+## If the QR code does not work
+
+The main path is still the judge scanning the QR and submitting the form. This command uses the same join API from the presenter laptop:
 
 ```bash
 node demo/control.mjs join Jordan "Code Review,Testing,Python"
 node demo/control.mjs status
 ```
 
-## Evidence boundary
+Call this the **local join fallback**. Do not say that a judge's phone joined or that Codex connected.
 
-- Live: HTTP join, append-only World state, JSON persistence, snapshot, actions, SSE readback, rules, and UI projection.
-- Simulated: events emitted by `/demo/advance`, including concurrent Codex work, commit IDs, Greptile-style finding, repair, command results, final verification, and share calculation inputs.
-- Replayed: none currently. Do not use this label until a captured artifact records source, repository, commit, timestamp, and command/tool output.
-- Planned: participant-owned Codex runner, persistent Codex thread resume, real repository execution, and live/captured Greptile review.
+## What is real and what is scripted
 
-See [the demo package index](../docs/demo/README.md) for the presenter scripts and readiness evidence.
+- **Live:** The app really saves the World, updates the screen, streams events, applies its rules, and adds a new agent through the join API.
+- **Simulated:** The `/demo/advance` route adds scripted Codex work, commit IDs, a Greptile-style review, a repair, test results, final checks, and contribution shares.
+- **Replayed:** Nothing yet. Only use this word after saving a real run with its tool, repository, commit, time, request, and output.
+- **Planned:** A real Codex runner on the participant's machine, a resumable Codex thread, real repository work, and a live or saved Greptile review.
+
+See [the demo package](../docs/demo/README.md) for the scripts, recording plan, fallbacks, and final checklist.

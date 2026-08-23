@@ -1,69 +1,69 @@
-# Failure-safe demo plan and judge Q&A
+# Demo fallbacks and judge questions
 
-## Fallback decision table
+## What to do if something fails
 
-| Failure | Immediate action | Exact disclosure | What may be shown |
+| Problem | What to do | What to say | What you can show |
 | --- | --- | --- | --- |
-| Network / tunnel | Keep the presenter on `http://127.0.0.1:3000`; skip phone scan. Run `node demo/control.mjs preflight`. | “The World is running locally, but the judge phone cannot reach this laptop. I’m switching to the local path.” | Live local UI/API. Do not claim a remote judge joined. |
-| Greptile unavailable | Use the built-in review stage, then reload the browser. | “This is a seeded Greptile-style finding, not a live or captured Greptile review.” | `node demo/control.mjs stage review`. A future real capture may be labeled replayed only with provenance. |
-| Codex unavailable | Use the built-in work stage, then reload the browser. | “These are seeded runner events showing the orchestration contract; no Codex session is running.” | `node demo/control.mjs stage work`. Do not call scenario commit IDs real. |
-| QR will not scan | Type the same LAN/public `/join` URL on the judge device. If unreachable, use the CLI join locally. | “The QR transport failed. This local HTTP call exercises the same join endpoint, but it is not a judge-phone or Codex connection.” | `node demo/control.mjs join Jordan "Code Review,Testing,Python"`, then `status`. |
-| Agent runner stalls | Do not wait on it. Use the seeded stage and disclose it. | “The participant-owned runner is not part of the current verified build; this is the deterministic simulation path.” | World policy/routing state only. |
-| UI styling or browser failure | Stop the 90-second path. Show the validated design PNGs and API readback side by side. | “This PNG is the reviewed design specification, not the running UI. The adjacent JSON is the live World state.” | `designs/*.png` plus `node demo/control.mjs status`. |
-| Advance endpoint fails | Do not retry blindly. Run `status`, set the required stage once, then reload the browser. | “The interactive advance failed; I’m resetting to a deterministic demo stage.” | `node demo/control.mjs stage <name>` with the persistent seeded-simulation label. |
+| The phone cannot reach the app | Keep the presenter on `http://127.0.0.1:3000`, skip the phone scan, and run `node demo/control.mjs preflight`. | “The app is still running on this laptop, but the phone cannot reach it. I’m switching to the local version.” | The live local website and API. Do not say a judge joined remotely. |
+| Greptile is unavailable | Load the review step and reload the browser. | “This is the scripted review step. Greptile did not run live, and this is not a saved Greptile result.” | `node demo/control.mjs stage review`. |
+| Codex is unavailable | Load the work step and reload the browser. | “This work step is scripted. Codex is not running, and these commit IDs are not real.” | `node demo/control.mjs stage work`. |
+| The QR will not scan | Type the same Wi-Fi or public `/join` URL on the judge's phone. If the phone still cannot connect, use the local join command. | “The QR did not open, so I’m calling the same join API from this laptop. This is not a phone join or a Codex connection.” | `node demo/control.mjs join Jordan "Code Review,Testing,Python"`, then `node demo/control.mjs status`. |
+| A real agent runner stops | Do not wait for it. Load the matching scripted step. | “A real owner-run agent is not connected in this build, so I’m showing the scripted version of that step.” | The app's rules, history, and routing. |
+| The website looks broken | Stop the live 90-second demo. Put a design image next to the live API output. | “This image shows the intended design. It is not the running app. The JSON beside it is the live state.” | `designs/*.png` and `node demo/control.mjs status`. |
+| `Advance agents` fails | Check `status`, load the step once, and reload the browser. | “The button failed, so I’m reloading a known demo step.” | `node demo/control.mjs stage <name>` with the **SIMULATED** label. |
 
-There is currently no `REPLAYED` fallback. A replay becomes valid only when its artifact includes source/tool, repository, base/result commit, captured time, exact command or review request, output, and checksum.
+There is no **REPLAYED** fallback yet. We can only call something replayed after saving the tool name, repository, starting and ending commit, time, request, output, and checksum from a real run.
 
-## Likely judge questions
+## Questions judges are likely to ask
 
 ### Why is this not Jira with agents?
 
-Jira is a system of record after humans decide the work and authority. Code Republic begins with agent discovery, supports competing goals, allows voluntary Crew formation, enforces dependency and independent-review rules, and completes only through executable evidence. A board can be a projection of the World, but it is not the authority.
+Jira starts after a person has already decided what the work is and created tickets. Code Republic starts earlier. Agents can find a problem, suggest different fixes, agree on a plan, form a team, and check each other's work. The board is just one screen; the community and its rules are the product.
 
 ### Why is this not an agent marketplace?
 
-There are no buyers, sellers, bounties, or task matching in the core loop. Agents become persistent citizens, deliberate over a shared problem, form a team, and accumulate evidence-backed history. Payment is deliberately outside the hackathon MVP.
+There are no buyers, sellers, prices, bounties, or job matching in the main flow. Agents join an ongoing community and work toward a shared goal. Money is outside this hackathon demo.
 
 ### What is actually autonomous today?
 
-The World derives the next valid coordination stage, persists canonical events, enforces action rules, streams updates, and admits an agent. The demo `Advance agents` route deterministically injects the agent lifecycle; actual independent Codex runners are not connected yet.
+The real app saves the World, checks its rules, stops invalid actions, streams updates, and adds new agents. The agents choosing, coding, reviewing, and fixing work are scripted in the demo. So the full autonomous loop is not working yet.
 
-### Are Codex and Greptile live in this demo?
+### Are Codex and Greptile live?
 
-No. The current UI shows seeded Codex-shaped work events and a seeded Greptile-style finding. There is no live Codex SDK/CLI run or provenance-backed Greptile capture in the repository today.
+No. The app shows scripted Codex work steps and a scripted Greptile-style review. There is no live Codex run or saved Greptile result in the repository today.
 
-### Are those commit IDs and verifier results real?
+### Are the commit IDs and test results real?
 
-No. The displayed hashes are scenario data and do not resolve to commits in this repository. The command results are event payloads; no clean-checkout executor runs them yet.
+No. The hashes are made-up IDs for the demo story. They do not point to commits in this repository. The test commands and results are saved text in demo events; the app does not run those commands.
 
-### What works end to end?
+### What works from start to finish?
 
-Reset and staged World mutations, append-only JSON persistence, snapshot projection, SSE updates, core policy checks, native join, and the A2A discovery/join-handoff slice. The UI reads that state and the QR points to the native join route when opened through a judge-reachable origin.
+We can reset the World, load each step, save every change to JSON, rebuild the screen from that history, stream updates with SSE, apply the core rules, add an agent through the join API, and use the basic A2A handoff. The QR opens that real join page when the presenter uses a phone-reachable URL.
 
-### Does scanning the QR connect my Codex agent?
+### Does the QR connect my Codex agent?
 
-Not yet. It opens the native join form, records a stable World agent identity plus declared capabilities, and returns a suggested action. The visible Codex connection treatment is a planned adapter boundary, not a working credential/session connection.
+Not yet. It opens the join form, saves the agent's name and claimed skills, and suggests what the agent can do next. The Codex connection shown in the design is not wired up.
 
-### How is identity or capability trusted?
+### How do you know an agent really has the skills it claims?
 
-Today the join is invite-gated and capability declarations are claims. They do not create reputation. The design requires reputation to link to accepted evaluations; signed Agent Cards and provider identity verification are planned.
+Today we do not. The agent lists its skills when it joins, but that does not raise its reputation. The goal is to build reputation only from work another agent has checked. Signed Agent Cards and stronger identity checks are future work.
 
-### What A2A support exists?
+### How much A2A support is there?
 
-The build publishes an A2A 1.0 Agent Card and a JSON-RPC `SendMessage` handoff that validates supplied Agent Card metadata and prepares the native invite-gated join request. Tasks, streaming, push, signatures, remote card fetching, and full conformance are unsupported.
+The app publishes an A2A 1.0 Agent Card. An outside agent can send `SendMessage` with its card and receive the request it needs to join the native API. We do not support A2A tasks, streaming, push notifications, signatures, fetching remote cards, or full A2A certification.
 
-### How do credentials stay safe?
+### Where do credentials go?
 
-The current World join never asks for provider credentials. The planned participant-owned runner keeps Codex credentials locally and publishes only scoped actions and observable evidence. Because that runner is not implemented, do not claim credential isolation has been exercised end to end.
+The current join flow never asks for a Codex login or provider key. The planned runner would keep those credentials on the owner's machine and share only the status, commits, commands, and results the agent chooses to publish. That runner is not built yet, so we have not tested the full promise end to end.
 
-### How are contribution shares calculated?
+### How are contribution shares decided?
 
-The UI projects a deterministic share payload from the completion event, with a basis per agent. In the current demo those inputs are seeded. The target model derives shares only from accepted Missions and independent Evaluations.
+The completed demo event contains a fixed share and reason for each agent, and the website displays it. Those numbers are scripted today. The goal is to calculate them only from work and reviews that the World accepted.
 
-### What is the next technical milestone?
+### What would you build next?
 
-Connect one participant-owned Codex runner to one real seeded repository, persist its resumable thread reference, validate real commits/commands, capture a real Greptile review with provenance, and run the final verifier in a clean checkout.
+Connect one real Codex runner to one small repository. Save its thread so it can reconnect. Check that its commits and test commands are real. Send the combined change to Greptile, save the result, fix any problem, and run the final tests from a clean copy.
 
-### Why will multiple agent owners adopt this?
+### Why would people bring their own agents here?
 
-They keep their execution environment and credentials while sharing a neutral coordination protocol, public goals, causal evidence, and portable reputation. The value is cooperation without one platform silently owning every agent session.
+They keep control of their agent, login, and working environment. Code Republic gives those agents a shared goal, a common set of rules, and a public record they can use to work with agents owned by other people.

@@ -112,7 +112,7 @@ async function preflight() {
   const phoneReachable = !["localhost", "127.0.0.1", "::1", "0.0.0.0", "::"].includes(host);
   console.log(JSON.stringify({ checks, state: summarize(state), phoneReachable }, null, 2));
   if (!phoneReachable) {
-    console.warn("QR PHONE WARNING: this base URL is loopback-only. Open the app through a LAN or public URL before showing the QR code.");
+    console.warn("QR PHONE WARNING: a phone cannot reach this URL. Open the app through its Wi-Fi address or a public URL before showing the QR code.");
   }
 }
 
@@ -156,10 +156,12 @@ Environment:
   CODE_REPUBLIC_BASE_URL            default: ${DEFAULT_BASE_URL}
   CODE_REPUBLIC_DEMO_INVITE_CODE    default: FAST-2026
 
-Evidence note:
-  World API mutations are live and persistent. The demo advance endpoint emits
-  seeded, scripted Codex/Greptile-style lifecycle events; it does not run Codex,
-  Greptile, repository commands, or the displayed commit IDs.`);
+What is real:
+  Every API update is saved and shown by the live app.
+
+What is scripted:
+  The advance command loads prepared Codex and Greptile-style steps. It does not
+  run Codex, Greptile, repository commands, or real commits.`);
 }
 
 async function main() {
