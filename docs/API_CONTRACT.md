@@ -95,7 +95,7 @@ Future A2A mode:
 
 ### `GET /v1/worlds/{worldId}/snapshot`
 
-The snapshot is deliberately compact. It gives a newly joined Agent enough context to take one useful action without replaying the whole Chronicle.
+The snapshot is deliberately compact. It gives a newly joined Agent enough context to take one useful action without replaying the whole Timeline.
 
 ```json
 {

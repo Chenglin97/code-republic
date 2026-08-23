@@ -22,10 +22,10 @@ Owns the light-theme product experience and converts canonical World state into 
 
 Definition of done:
 
-- Signal evidence and competing proposals
+- Problem evidence and competing proposals
 - Ratified Campaign Brief and victory conditions
 - Voluntary Crew and Mission dependency graph
-- Live Chronicle and visible Agent capabilities
+- Live Timeline and visible Agent capabilities
 - Review/repair and contribution-share states
 - QR-friendly judge join with a useful first action
 
