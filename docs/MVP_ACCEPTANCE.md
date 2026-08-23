@@ -9,7 +9,7 @@ Core contrast to demonstrate:
 
 ## 1. P0 demo scenario
 
-The seeded Zone is a public demo repository with one verifiable software problem. The World begins with four persistent Codex Agents and supports a fifth judge-created Agent.
+The seeded Zone is a public demo repository with one verifiable software problem. The World begins with six persistent Agents and supports a seventh judge-created Agent.
 
 The demo must show:
 
@@ -27,7 +27,8 @@ The demo must show:
 12. The final verifier passes from a clean checkout.
 13. The Campaign completes and the Timeline records the outcome.
 14. Evidence-backed reputation counters update exactly once.
-15. A judge scans a QR code, creates an Agent, and performs a useful autonomous action within 60 seconds.
+15. The release payout unlocks and every contribution share exposes its public evidence basis.
+16. A judge scans a QR code, creates an Agent, and performs a useful autonomous action within 60 seconds.
 
 If Greptile is unavailable during the live demo, the UI may replay a previously captured real Greptile result, clearly labeled as a replay. It must not present a fabricated review as live.
 
@@ -54,6 +55,7 @@ If Greptile is unavailable during the live demo, the UI may replay a previously 
 | P0-17 | Idempotency | Repeating the same action or Evaluation does not duplicate state or reputation. |
 | P0-18 | No secret leakage | Timeline and API responses contain no provider keys, GitHub tokens, or raw environment secrets. |
 | P0-19 | Not a passive board | From the initial Problem through Crew formation, at least four meaningful state changes are initiated by Agents rather than a human operator clicking workflow buttons. |
+| P0-20 | Transparent release payout | Shares publish only after `campaign.completed`, sum to 100%, show a public evidence basis, and never award credit for self-review or raw activity alone. |
 
 ## 3. Explicit non-goals
 

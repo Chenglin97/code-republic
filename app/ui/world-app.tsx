@@ -43,9 +43,9 @@ const viewTitles: Record<View, { eyebrow: string; title: string; description: st
     description: "The ratified objective, constraints, and executable definition of victory.",
   },
   missions: {
-    eyebrow: "Voluntary execution",
-    title: "Crew & Mission Graph",
-    description: "Agents self-select work while dependencies, leases, and evidence remain public.",
+    eyebrow: "Autonomous delivery network",
+    title: "Mission Control",
+    description: "Different agents discover, plan, implement, evaluate, and verify one shared outcome.",
   },
   chronicle: {
     eyebrow: "Causal public record",
@@ -421,7 +421,28 @@ function MissionNode({ mission, snapshot }: { mission: Mission; snapshot: WorldS
   );
 }
 
+type MissionPhaseId = "discover" | "plan" | "build" | "evaluate" | "release";
+type MissionPhaseStatus = "complete" | "active" | "attention" | "queued";
+
+interface MissionPhase {
+  id: MissionPhaseId;
+  index: string;
+  label: string;
+  purpose: string;
+  status: MissionPhaseStatus;
+  agents: Array<{ agent: Agent; action: string }>;
+  evidence: string[];
+}
+
+function missionPhaseLabel(status: MissionPhaseStatus) {
+  if (status === "complete") return "Evidence accepted";
+  if (status === "attention") return "Repair required";
+  if (status === "active") return "Agents working";
+  return "Waiting on dependency";
+}
+
 function MissionsView({ snapshot }: { snapshot: WorldSnapshot }) {
+  const [selectedPhaseId, setSelectedPhaseId] = useState<MissionPhaseId>("build");
   const crew = snapshot.campaign?.crewAgentIds.map((id) => agentById(snapshot, id)).filter(Boolean) as Agent[] | undefined;
   const visibleCrew = crew?.length ? crew : snapshot.agents.slice(0, 5);
   const placeholderMissions: Mission[] = [
@@ -431,26 +452,152 @@ function MissionsView({ snapshot }: { snapshot: WorldSnapshot }) {
     { id: "msn_release", title: "Run clean-checkout verifier", capability: "Release", status: "blocked", dependsOn: ["msn_integration"] },
   ];
   const missions = snapshot.missions.length ? snapshot.missions : placeholderMissions;
+  const acceptedCount = snapshot.missions.filter((mission) => mission.status === "accepted").length;
+  const submittedCount = snapshot.missions.filter((mission) => Boolean(mission.contributionCommit)).length;
+  const allAccepted = snapshot.missions.length > 0 && acceptedCount === snapshot.missions.length;
+  const findingMission = snapshot.missions.find((mission) => mission.finding);
+  const signalAuthor = agentById(snapshot, snapshot.signal?.authorAgentId);
+  const reliabilityAgent = snapshot.agents.find((agent) => agent.capabilities.includes("Reliability"));
+  const proposalAuthors = snapshot.proposals.map((proposal) => agentById(snapshot, proposal.authorAgentId)).filter(Boolean) as Agent[];
+  const planningSupport = snapshot.agents.find((agent) => agent.capabilities.includes("Developer Experience"));
+  const builders = snapshot.missions.map((mission) => agentById(snapshot, mission.ownerAgentId)).filter(Boolean) as Agent[];
+  const reviewers = snapshot.agents.filter((agent) => agent.capabilities.includes("Code Review") || agent.capabilities.includes("Reliability"));
+  const unique = (agents: Agent[]) => agents.filter((agent, index) => agents.findIndex((candidate) => candidate.id === agent.id) === index);
+  const phases: MissionPhase[] = [
+    {
+      id: "discover",
+      index: "01",
+      label: "Discover",
+      purpose: "Find a concrete repository problem and reproduce it independently before the community spends implementation effort.",
+      status: snapshot.signal?.status === "validated" ? "complete" : "active",
+      agents: unique([signalAuthor, reliabilityAgent].filter(Boolean) as Agent[]).map((agent) => ({
+        agent,
+        action: agent.id === snapshot.signal?.authorAgentId ? "Found the response-contract break" : "Reproduced the failures from a clean checkout",
+      })),
+      evidence: snapshot.signal?.evidence.slice(0, 3) ?? ["Repository scan is still running"],
+    },
+    {
+      id: "plan",
+      index: "02",
+      label: "Plan",
+      purpose: "Publish competing approaches, expose their tradeoffs, and ratify one versioned plan through independent endorsements.",
+      status: snapshot.campaign ? "complete" : snapshot.proposals.length > 0 ? "active" : "queued",
+      agents: unique([...proposalAuthors, ...(planningSupport ? [planningSupport] : [])]).slice(0, 3).map((agent) => ({
+        agent,
+        action: snapshot.proposals.find((proposal) => proposal.authorAgentId === agent.id)?.title ?? "Mapped downstream migration impact",
+      })),
+      evidence: snapshot.proposals.length
+        ? snapshot.proposals.map((proposal) => `${proposal.title} · ${proposal.endorsements.length} endorsements`)
+        : ["Waiting for the verified Problem"],
+    },
+    {
+      id: "build",
+      index: "03",
+      label: "Implement",
+      purpose: "Agents volunteer by capability, claim scoped work with leases, and publish code or test evidence concurrently.",
+      status: allAccepted ? "complete" : submittedCount > 0 || builders.length > 0 ? "active" : snapshot.missions.length > 0 ? "active" : "queued",
+      agents: unique(builders.length ? builders : snapshot.agents.filter((agent) => ["TypeScript", "Testing", "Developer Experience"].some((capability) => agent.capabilities.includes(capability)))).slice(0, 3).map((agent) => ({
+        agent,
+        action: snapshot.missions.find((mission) => mission.ownerAgentId === agent.id)?.title ?? agent.currentActivity,
+      })),
+      evidence: snapshot.missions.filter((mission) => mission.contributionCommit).map((mission) => `${mission.title} · ${mission.contributionCommit}`).slice(0, 3).concat(submittedCount ? [] : ["Scoped work and dependency graph published"]),
+    },
+    {
+      id: "evaluate",
+      index: "04",
+      label: "Evaluate",
+      purpose: "Independent reviewers inspect contributions, route findings to the responsible builder, and require evidence before acceptance.",
+      status: allAccepted ? "complete" : findingMission?.status === "needs_work" ? "attention" : submittedCount > 0 ? "active" : "queued",
+      agents: reviewers.slice(0, 2).map((agent) => ({
+        agent,
+        action: agent.capabilities.includes("Code Review") ? "Reviews changes and routes repair findings" : "Runs integration and reliability checks",
+      })),
+      evidence: findingMission?.finding
+        ? [`Finding routed to ${agentById(snapshot, findingMission.ownerAgentId)?.name ?? "the responsible builder"}`, findingMission.finding]
+        : acceptedCount > 0 ? [`${acceptedCount} independently accepted Missions`] : ["Evaluation waits for submitted Contributions"],
+    },
+    {
+      id: "release",
+      index: "05",
+      label: "Verify",
+      purpose: "A final verifier checks the ratified victory conditions and only then records the release and contribution shares.",
+      status: snapshot.world.stage === "completed" ? "complete" : allAccepted ? "active" : "queued",
+      agents: reviewers.slice().reverse().slice(0, 2).map((agent) => ({
+        agent,
+        action: agent.capabilities.includes("Release") ? "Runs clean-checkout verification" : "Confirms the verifier independently",
+      })),
+      evidence: snapshot.campaign?.victoryConditions.map((condition) => `${condition.status === "passed" ? "Passed" : "Pending"} · ${condition.label}`).slice(0, 3) ?? ["Victory conditions publish with the Campaign Brief"],
+    },
+  ];
+  const selectedPhase = phases.find((phase) => phase.id === selectedPhaseId) ?? phases[2];
+  const payoutUnlocked = snapshot.world.stage === "completed" && snapshot.contributionShares.length > 0;
+  const payoutTotal = snapshot.contributionShares.reduce((sum, item) => sum + item.share, 0);
   const highlighted = snapshot.missions.find((mission) => mission.finding) ?? snapshot.missions.find((mission) => mission.contributionCommit) ?? snapshot.missions[0];
   const highlightedOwner = agentById(snapshot, highlighted?.ownerAgentId);
   return (
-    <div className="missions-layout">
-      <div className="missions-main">
+    <div className="mission-control-layout">
+      <section className="coordination-flow" aria-label="Autonomous mission lifecycle">
+        <header className="coordination-flow-heading">
+          <div><span className="eyebrow">One outcome · specialized agents</span><h2>From discovered problem to verified release</h2><p>Each handoff is triggered by public evidence. No manager assigns every step.</p></div>
+          <StatusPill label={`${snapshot.agents.length} agents · 5 phases`} tone="active" />
+        </header>
+        <div className="phase-track">
+          {phases.map((phase) => (
+            <button className={cx("phase-card", `phase-${phase.status}`, selectedPhase.id === phase.id && "phase-selected")} onClick={() => setSelectedPhaseId(phase.id)} key={phase.id} aria-pressed={selectedPhase.id === phase.id}>
+              <span className="phase-index">{phase.index}</span>
+              <span className="phase-name">{phase.label}</span>
+              <span className="phase-status"><i />{missionPhaseLabel(phase.status)}</span>
+              <span className="phase-avatars">{phase.agents.slice(0, 3).map(({ agent }) => <Avatar agent={agent} size="small" key={agent.id} />)}</span>
+              <span className="phase-arrow" aria-hidden="true">→</span>
+            </button>
+          ))}
+        </div>
+        <div className={cx("phase-detail", `phase-detail-${selectedPhase.status}`)}>
+          <div className="phase-detail-copy"><div className="phase-detail-title"><span>{selectedPhase.index}</span><div><small>Selected phase</small><h3>{selectedPhase.label}</h3></div></div><p>{selectedPhase.purpose}</p></div>
+          <div className="phase-agent-actions"><span className="eyebrow">Agents acting here</span>{selectedPhase.agents.map(({ agent, action }) => <div className="phase-agent-action" key={agent.id}><Avatar agent={agent} size="small" /><div><strong>{agent.name}</strong><span>{action}</span></div></div>)}</div>
+          <div className="phase-evidence"><span className="eyebrow">Evidence produced</span>{selectedPhase.evidence.map((evidence) => <div key={evidence}><span>✓</span><p>{evidence}</p></div>)}</div>
+        </div>
+      </section>
+      <section className={cx("reward-loop", payoutUnlocked && "reward-loop-unlocked")} aria-label="Transparent release payout">
+        <div className="reward-intro">
+          <span className="eyebrow">Shared outcome incentive</span>
+          <div className="reward-title-row"><h2>Quality determines the release payout</h2><StatusPill label={payoutUnlocked ? `${payoutTotal}% allocated` : "Locked until verified"} tone={payoutUnlocked ? "success" : "neutral"} /></div>
+          <p>No Agent is paid for claiming a Mission or producing raw activity. The pool unlocks only when the whole Campaign passes, then accepted evidence determines each share.</p>
+          <div className="reward-principles">
+            <div><span>01</span><p><strong>Trace the work</strong>Claims, contributions, findings, repairs, and evaluations remain in the public Timeline.</p></div>
+            <div><span>02</span><p><strong>Require peer review</strong>A builder cannot evaluate its own Contribution, and rejected work does not count as accepted quality.</p></div>
+            <div><span>03</span><p><strong>Reward outcome quality</strong>Reliable implementation, useful review, integration impact, and final verification earn stronger shares.</p></div>
+          </div>
+        </div>
+        <div className="reward-ledger">
+          <div className="reward-ledger-heading"><div><span className="eyebrow">Contribution ledger</span><strong>{payoutUnlocked ? "Evidence-backed split" : "Publishes after release"}</strong></div><span className={cx("payout-lock", payoutUnlocked && "payout-unlocked")}>{payoutUnlocked ? "✓" : "⌁"}</span></div>
+          {payoutUnlocked ? <div className="reward-share-list">{snapshot.contributionShares.map((item) => {
+            const agent = agentById(snapshot, item.agentId);
+            if (!agent) return null;
+            const traceCount = snapshot.recentEvents.filter((event) => event.actorAgentId === agent.id).length;
+            return <div className="reward-share" key={item.agentId}><Avatar agent={agent} size="small" /><div><div className="reward-share-top"><strong>{agent.name}</strong><span>{item.share}%</span></div><div className="reward-share-bar"><span style={{ width: `${item.share}%`, background: agent.color }} /></div><p>{item.basis}</p><small>{traceCount} visible trace event{traceCount === 1 ? "" : "s"}</small></div></div>;
+          })}</div> : <div className="reward-locked-state"><span>∑</span><h3>No speculative leaderboard</h3><p>Shares remain hidden until independent evaluation and the final verifier establish accepted evidence.</p></div>}
+          <div className="reward-audit-note"><span>◎</span><p><strong>Transparent and challengeable.</strong> Every share points to public evidence; no self-review and no opaque global score.</p></div>
+        </div>
+      </section>
+      <div className="missions-layout mission-execution-layout">
+        <div className="missions-main">
         <Panel className="crew-strip" eyebrow="Crew formed without assignment" action={<StatusPill label={`${visibleCrew.length} volunteered`} tone="success" />}><div className="crew-list">{visibleCrew.map((agent) => <AgentIdentity agent={agent} compact key={agent.id} />)}</div></Panel>
         <div className="graph-stage">
-          <div className="graph-stage-label"><span>Dependency graph</span><strong>{missions.length} missions · {snapshot.missions.filter((mission) => mission.status === "accepted").length} accepted</strong></div>
+          <div className="graph-stage-label"><span>Implementation dependency graph</span><strong>{missions.length} Missions · {acceptedCount} accepted</strong></div>
           <div className="mission-grid">{missions.map((mission) => <MissionNode mission={mission} snapshot={snapshot} key={mission.id} />)}</div>
           <div className="graph-legend"><span><i className="legend-line accepted" />Accepted</span><span><i className="legend-line active" />Claimed / submitted</span><span><i className="legend-line blocked" />Blocked / repair</span></div>
         </div>
+        </div>
+        <aside className="mission-inspector">
+          <div className="inspector-heading"><StatusPill label={highlighted ? humanize(highlighted.status) : "Waiting"} tone={highlighted?.status === "accepted" ? "success" : highlighted?.finding ? "warning" : "active"} /><h2>{highlighted?.title ?? "Missions appear after ratification"}</h2><p>{highlighted?.capability ?? "The community will publish a dependency graph next."}</p></div>
+          {highlightedOwner && <div className="inspector-section"><span className="eyebrow">Voluntary owner</span><AgentIdentity agent={highlightedOwner} /></div>}
+          <div className="inspector-section"><span className="eyebrow">Allowed scope</span><div className="scope-list"><code>Modify /sdk/adapter/**</code><code>Modify /sdk/compat/**</code><code>Read /sdk/core/**</code></div></div>
+          {highlighted?.contributionCommit && <div className="inspector-section"><span className="eyebrow">Contribution evidence</span><div className="commit-evidence"><span>⌘</span><div><strong>Commit submitted</strong><code>{highlighted.contributionCommit}</code></div></div></div>}
+          {highlighted?.finding && <div className="finding-card"><span className="eyebrow">Seeded Greptile-style finding</span><strong>{highlighted.finding}</strong><p>Routed to {highlightedOwner?.name ?? "the responsible builder"} by causal Mission ownership. This demo evidence is scripted.</p></div>}
+          <div className="inspector-section"><span className="eyebrow">Verifier</span><p className="verifier-line"><span>✹</span>Compatibility suite · independent review</p></div>
+        </aside>
       </div>
-      <aside className="mission-inspector">
-        <div className="inspector-heading"><StatusPill label={highlighted ? humanize(highlighted.status) : "Waiting"} tone={highlighted?.status === "accepted" ? "success" : highlighted?.finding ? "warning" : "active"} /><h2>{highlighted?.title ?? "Missions appear after ratification"}</h2><p>{highlighted?.capability ?? "The community will publish a dependency graph next."}</p></div>
-        {highlightedOwner && <div className="inspector-section"><span className="eyebrow">Voluntary owner</span><AgentIdentity agent={highlightedOwner} /></div>}
-        <div className="inspector-section"><span className="eyebrow">Allowed scope</span><div className="scope-list"><code>Modify /sdk/adapter/**</code><code>Modify /sdk/compat/**</code><code>Read /sdk/core/**</code></div></div>
-        {highlighted?.contributionCommit && <div className="inspector-section"><span className="eyebrow">Contribution evidence</span><div className="commit-evidence"><span>⌘</span><div><strong>Commit submitted</strong><code>{highlighted.contributionCommit}</code></div></div></div>}
-        {highlighted?.finding && <div className="finding-card"><span className="eyebrow">Greptile integration finding</span><strong>{highlighted.finding}</strong><p>Routed to {highlightedOwner?.name ?? "the responsible builder"} by causal mission ownership.</p></div>}
-        <div className="inspector-section"><span className="eyebrow">Verifier</span><p className="verifier-line"><span>✹</span>Compatibility suite · independent review</p></div>
-      </aside>
     </div>
   );
 }
