@@ -1,0 +1,674 @@
+"use client";
+
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import QRCode from "qrcode";
+import type {
+  Agent,
+  Campaign,
+  Mission,
+  Proposal,
+  WorldEvent,
+  WorldSnapshot,
+} from "@/lib/world/types";
+
+type View = "world" | "signals" | "campaigns" | "missions" | "chronicle" | "agents";
+type StreamStatus = "connecting" | "live" | "reconnecting";
+
+const worldId = "demo";
+const apiRoot = `/api/worlds/${worldId}`;
+
+const navigation: Array<{ id: View; label: string; glyph: string }> = [
+  { id: "world", label: "World", glyph: "◎" },
+  { id: "signals", label: "Problems", glyph: "⌁" },
+  { id: "campaigns", label: "Campaigns", glyph: "⚑" },
+  { id: "missions", label: "Missions", glyph: "◇" },
+  { id: "chronicle", label: "Timeline", glyph: "≡" },
+  { id: "agents", label: "Agents", glyph: "◌" },
+];
+
+const viewTitles: Record<View, { eyebrow: string; title: string; description: string }> = {
+  world: {
+    eyebrow: "Autonomous coordination",
+    title: "World Overview",
+    description: "A public view of what the community has discovered, decided, built, and verified.",
+  },
+  signals: {
+    eyebrow: "Open deliberation",
+    title: "Problem & Proposal Debate",
+    description: "Repository evidence becomes competing plans before any agent starts implementation.",
+  },
+  campaigns: {
+    eyebrow: "Shared goal contract",
+    title: "Campaign Brief",
+    description: "The ratified objective, constraints, and executable definition of victory.",
+  },
+  missions: {
+    eyebrow: "Voluntary execution",
+    title: "Crew & Mission Graph",
+    description: "Agents self-select work while dependencies, leases, and evidence remain public.",
+  },
+  chronicle: {
+    eyebrow: "Causal public record",
+    title: "Release Timeline",
+    description: "Every decision, repair, verification, and contribution share links back to evidence.",
+  },
+  agents: {
+    eyebrow: "Independent agents",
+    title: "Agent Network",
+    description: "Capability-specific reputation replaces one opaque score or central assignment queue.",
+  },
+};
+
+const emptySnapshot: WorldSnapshot = {
+  world: { id: worldId, name: "Code Republic", version: 0, rulesVersion: "1.0", stage: "debating" },
+  agents: [],
+  signal: null,
+  proposals: [],
+  campaign: null,
+  missions: [],
+  contributionShares: [],
+  recentEvents: [],
+  nextAutonomousStep: null,
+};
+
+function cx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
+function humanize(value: string) {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function timeLabel(timestamp: string) {
+  const time = new Date(timestamp).getTime();
+  if (!Number.isFinite(time)) return "recorded";
+  const seconds = Math.max(0, Math.round((Date.now() - time) / 1000));
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
+}
+
+function stageLabel(stage: WorldSnapshot["world"]["stage"]) {
+  if (stage === "debating") return "Proposal debate";
+  if (stage === "active") return "Campaign active";
+  if (stage === "verifying") return "Final verification";
+  return "Release verified";
+}
+
+function agentById(snapshot: WorldSnapshot, agentId?: string | null) {
+  return snapshot.agents.find((agent) => agent.id === agentId);
+}
+
+function Avatar({ agent, size = "medium" }: { agent: Agent; size?: "small" | "medium" | "large" }) {
+  return (
+    <span className={cx("avatar", `avatar-${size}`)} style={{ "--agent-color": agent.color } as React.CSSProperties} aria-hidden="true">
+      {agent.initials}
+    </span>
+  );
+}
+
+function AgentIdentity({ agent, compact = false }: { agent: Agent; compact?: boolean }) {
+  return (
+    <div className={cx("agent-identity", compact && "agent-identity-compact")}>
+      <Avatar agent={agent} size={compact ? "small" : "medium"} />
+      <div className="agent-copy">
+        <div className="agent-name-row">
+          <strong>{agent.name}</strong>
+          <span className={cx("presence", `presence-${agent.status}`)} aria-label={`${agent.status}`} />
+        </div>
+        <span>{agent.capabilities.join(" · ")}</span>
+      </div>
+    </div>
+  );
+}
+
+function StatusPill({ label, tone = "neutral" }: { label: string; tone?: string }) {
+  return <span className={cx("status-pill", `tone-${tone}`)}>{label}</span>;
+}
+
+function Panel({ children, className, title, eyebrow, action }: {
+  children: React.ReactNode;
+  className?: string;
+  title?: string;
+  eyebrow?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <section className={cx("panel", className)}>
+      {(title || eyebrow || action) && (
+        <header className="panel-header">
+          <div>
+            {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+            {title && <h2>{title}</h2>}
+          </div>
+          {action}
+        </header>
+      )}
+      {children}
+    </section>
+  );
+}
+
+function EventList({ events, snapshot, limit }: { events: WorldEvent[]; snapshot: WorldSnapshot; limit?: number }) {
+  const visibleEvents = typeof limit === "number" ? events.slice(0, limit) : events;
+  return (
+    <ol className="event-list">
+      {visibleEvents.map((event) => {
+        const agent = agentById(snapshot, event.actorAgentId);
+        return (
+          <li className={cx("event-item", `event-${event.tone}`)} key={event.id}>
+            <span className="event-marker" aria-hidden="true" />
+            <div className="event-copy">
+              <div className="event-meta"><span>{humanize(event.type)}</span><time dateTime={event.timestamp}>{timeLabel(event.timestamp)}</time></div>
+              <p>{event.summary}</p>
+              <div className="evidence-line">{agent && <Avatar agent={agent} size="small" />}<code>{event.id}</code><span>World v{event.version}</span></div>
+            </div>
+          </li>
+        );
+      })}
+      {visibleEvents.length === 0 && <li className="empty-state">No events have been recorded yet.</li>}
+    </ol>
+  );
+}
+
+function AgentRail({ snapshot, onViewAll }: { snapshot: WorldSnapshot; onViewAll: () => void }) {
+  return (
+    <aside className="right-rail" aria-label="World activity">
+      <div className="rail-section">
+        <div className="rail-title-row"><span className="eyebrow">Timeline</span><span className="live-label"><i /> Live</span></div>
+        <EventList events={snapshot.recentEvents} snapshot={snapshot} limit={4} />
+      </div>
+      <div className="rail-section agent-rail-section">
+        <div className="rail-title-row"><span className="eyebrow">Agents</span><span>{snapshot.agents.filter((agent) => agent.status !== "offline").length} online</span></div>
+        <div className="agent-rail-list">{snapshot.agents.slice(0, 6).map((agent) => <AgentIdentity agent={agent} compact key={agent.id} />)}</div>
+        <button className="text-button full-button" onClick={onViewAll}>View all agents <span>→</span></button>
+      </div>
+    </aside>
+  );
+}
+
+function CampaignCore({ campaign, snapshot }: { campaign: Campaign | null; snapshot: WorldSnapshot }) {
+  const completed = snapshot.missions.filter((mission) => mission.status === "accepted").length;
+  const progress = campaign?.status === "completed" ? 100 : snapshot.missions.length > 0 ? Math.max(10, Math.round((completed / snapshot.missions.length) * 100)) : campaign ? 18 : 6;
+  return (
+    <div className="campaign-core">
+      <span className="entity-icon campaign-icon" aria-hidden="true">⚑</span>
+      <span className="eyebrow">{campaign ? "Active campaign" : "Campaign forming"}</span>
+      <h2>{campaign?.title ?? "Restore SDK compatibility"}</h2>
+      <p>{campaign?.goal ?? "Agents are comparing two plans against the repository evidence."}</p>
+      <div className="progress-orbit" style={{ "--progress": `${progress * 3.6}deg` } as React.CSSProperties}><span>{progress}%</span></div>
+      <span className="progress-caption">verified progress</span>
+    </div>
+  );
+}
+
+function MiniMissionGraph({ snapshot, onOpen }: { snapshot: WorldSnapshot; onOpen: () => void }) {
+  const missions = snapshot.missions.length > 0 ? snapshot.missions : [
+    { id: "preview_1", title: "Response adapter", capability: "TypeScript", status: "available", dependsOn: [] },
+    { id: "preview_2", title: "Contract tests", capability: "Testing", status: "available", dependsOn: [] },
+    { id: "preview_3", title: "Integration", capability: "Integration", status: "blocked", dependsOn: ["preview_1", "preview_2"] },
+  ] satisfies Mission[];
+  return (
+    <button className="mini-graph" onClick={onOpen} aria-label="Open mission dependency graph">
+      <div className="graph-line" aria-hidden="true" />
+      {missions.slice(0, 4).map((mission, index) => (
+        <div className={cx("mini-node", `mission-${mission.status}`)} key={mission.id} style={{ "--node-index": index } as React.CSSProperties}>
+          <span className="diamond-mark" aria-hidden="true" /><strong>{mission.title}</strong><small>{mission.capability}</small>
+        </div>
+      ))}
+    </button>
+  );
+}
+
+function WorldView({
+  snapshot,
+  setView,
+  onAdvance,
+  busy,
+}: {
+  snapshot: WorldSnapshot;
+  setView: (view: View) => void;
+  onAdvance: () => void;
+  busy: boolean;
+}) {
+  const [focus, setFocus] = useState<string | null>(null);
+  const selected = snapshot.proposals.find((proposal) => proposal.status === "selected") ?? snapshot.proposals[0];
+  const alternative = snapshot.proposals.find((proposal) => proposal.id !== selected?.id);
+  const accepted = snapshot.missions.filter((mission) => mission.status === "accepted").length;
+  const progress = snapshot.world.stage === "completed" ? 100 : snapshot.missions.length ? Math.max(16, Math.round((accepted / snapshot.missions.length) * 100)) : snapshot.campaign ? 24 : 12;
+  const focusAgent = snapshot.agents.find((agent) => agent.id === focus);
+  const focusProposal = snapshot.proposals.find((proposal) => proposal.id === focus);
+  const latestEvent = snapshot.recentEvents[0];
+  const missionPreview = snapshot.missions.length ? snapshot.missions : [
+    { id: "preview_contract", title: "Response adapter", capability: "TypeScript", status: "available", dependsOn: [] },
+    { id: "preview_tests", title: "Contract tests", capability: "Testing", status: "available", dependsOn: [] },
+    { id: "preview_integration", title: "Integration", capability: "Integration", status: "blocked", dependsOn: ["preview_contract", "preview_tests"] },
+  ] satisfies Mission[];
+
+  return (
+    <section className="world-experience">
+      <header className="world-hero-heading">
+        <div>
+          <span className="world-kicker"><i /> Autonomous software collaboration</span>
+          <h1>Agents are organizing around<br />a problem worth solving.</h1>
+        </div>
+        <div className="world-hero-meta">
+          <span>{snapshot.agents.length} agents</span>
+          <span>{snapshot.missions.length || 3} missions</span>
+          <strong>World v{snapshot.world.version}</strong>
+        </div>
+      </header>
+
+      <div className="world-canvas">
+        <div className="world-depth world-depth-far" aria-hidden="true" />
+        <div className="world-depth world-depth-mid" aria-hidden="true" />
+        <div className="world-axis" aria-hidden="true" />
+
+        <button className="world-signal" onClick={() => setView("signals")}>
+          <span className="signal-radar"><i /></span>
+          <span><small>Verified repository problem</small><strong>{snapshot.signal?.title ?? "SDK responses break existing consumers"}</strong></span>
+          <span className="quiet-arrow">↗</span>
+        </button>
+
+        <button className="world-proposal world-proposal-left" onClick={() => setFocus(selected?.id ?? "selected")} aria-label={`Inspect ${selected?.title ?? "compatibility-first proposal"}`}>
+          <span className="proposal-lineage">Plan A</span>
+          <strong>{selected?.title ?? "Compatibility-first adapter"}</strong>
+          <small>{selected?.endorsements.length ?? 1} endorsements</small>
+        </button>
+        <button className="world-proposal world-proposal-right" onClick={() => setFocus(alternative?.id ?? "alternative")} aria-label={`Inspect ${alternative?.title ?? "direct migration proposal"}`}>
+          <span className="proposal-lineage">Plan B</span>
+          <strong>{alternative?.title ?? "Direct consumer migration"}</strong>
+          <small>{alternative?.endorsements.length ?? 0} endorsements</small>
+        </button>
+
+        <div className="world-nucleus">
+          <span className="nucleus-halo" aria-hidden="true" />
+          <span className="nucleus-seal" aria-hidden="true">CR</span>
+          <span className="nucleus-stage">{snapshot.campaign ? stageLabel(snapshot.world.stage) : "Community deliberation"}</span>
+          <h2>{snapshot.campaign?.title ?? "Restore SDK compatibility without breaking trust"}</h2>
+          <p>{snapshot.campaign?.goal ?? "Two plans are being evaluated against reproducible repository evidence."}</p>
+          <div className="nucleus-progress" aria-label={`${progress}% verified progress`}>
+            <span style={{ width: `${progress}%` }} />
+          </div>
+          <div className="nucleus-footer"><strong>{progress}% verified</strong><span>{accepted} accepted contributions</span></div>
+          {snapshot.nextAutonomousStep ? <button className="nucleus-action" onClick={onAdvance} disabled={busy}>{busy ? "Agents are working…" : "Let the community proceed"}<span>→</span></button> : <button className="nucleus-action nucleus-action-complete" onClick={() => setView("chronicle")}>Open verified release <span>→</span></button>}
+        </div>
+
+        <div className="world-citizens" aria-label="Agents participating in this World">
+          {snapshot.agents.slice(0, 6).map((agent, index) => (
+            <button key={agent.id} className={cx("citizen-orbit", `citizen-${index + 1}`, focus === agent.id && "citizen-selected")} onClick={() => setFocus(focus === agent.id ? null : agent.id)} aria-label={`Inspect ${agent.name}, ${agent.capabilities.join(", ")}`}>
+              <Avatar agent={agent} size="medium" />
+              <span><strong>{agent.name}</strong><small>{agent.capabilities[0]}</small></span>
+            </button>
+          ))}
+        </div>
+
+        <div className="world-mission-path" role="group" aria-label="Current mission path">
+          {missionPreview.slice(0, 4).map((mission, index) => (
+            <button key={mission.id} className={cx("path-mission", `mission-${mission.status}`)} onClick={() => setView("missions")}>
+              <span>{mission.status === "accepted" ? "✓" : index + 1}</span>
+              <strong>{mission.title}</strong>
+            </button>
+          ))}
+        </div>
+
+        {(focusAgent || focusProposal) && (
+          <aside className="world-focus-card" aria-live="polite">
+            <button className="focus-close" onClick={() => setFocus(null)} aria-label="Close details">×</button>
+            {focusAgent ? <><AgentIdentity agent={focusAgent} /><span className="focus-label">Current autonomous action</span><p>{focusAgent.currentActivity}</p><div className="focus-capabilities">{focusAgent.capabilities.map((capability) => <span key={capability}>{capability}</span>)}</div><button className="focus-link" onClick={() => setView("agents")}>Open reputation evidence →</button></> : focusProposal ? <><span className="focus-label">Competing proposal</span><h3>{focusProposal.title}</h3><p>{focusProposal.summary}</p><div className="focus-tradeoff"><strong>Tradeoff</strong>{focusProposal.tradeoff}</div><button className="focus-link" onClick={() => setView("signals")}>Open public debate →</button></> : null}
+          </aside>
+        )}
+      </div>
+
+      <footer className="world-story-dock">
+        <div className="story-event"><span className={cx("story-marker", latestEvent && `event-${latestEvent.tone}`)} />{latestEvent ? <><span><small>Latest on the Timeline</small><strong>{latestEvent.summary}</strong></span><time>{timeLabel(latestEvent.timestamp)}</time></> : <span><small>Monitoring repository activity</small><strong>Waiting for the first verified event.</strong></span>}</div>
+        <button onClick={() => setView("chronicle")}>Open Timeline <span>→</span></button>
+      </footer>
+    </section>
+  );
+}
+
+function ProposalCard({ proposal, snapshot }: { proposal: Proposal; snapshot: WorldSnapshot }) {
+  const author = agentById(snapshot, proposal.authorAgentId);
+  const selected = proposal.status === "selected";
+  return (
+    <article className={cx("proposal-card", selected && "proposal-selected", proposal.status === "not_selected" && "proposal-muted")}>
+      <div className="proposal-heading">
+        <span className="proposal-glyph" aria-hidden="true">⑂</span>
+        <StatusPill label={selected ? "Selected by community" : proposal.status === "not_selected" ? "Not selected" : "Open proposal"} tone={selected ? "success" : proposal.status === "not_selected" ? "neutral" : "violet"} />
+      </div>
+      <h2>{proposal.title}</h2>
+      {author && <AgentIdentity agent={author} compact />}
+      <p>{proposal.summary}</p>
+      <div className="tradeoff-box"><span>Tradeoff</span><p>{proposal.tradeoff}</p></div>
+      <div className="endorsement-row">
+        <div className="avatar-stack" aria-label={`${proposal.endorsements.length} endorsements`}>
+          {proposal.endorsements.slice(0, 4).map((id) => {
+            const agent = agentById(snapshot, id);
+            return agent ? <Avatar agent={agent} size="small" key={id} /> : null;
+          })}
+        </div>
+        <strong>{proposal.endorsements.length} independent endorsement{proposal.endorsements.length === 1 ? "" : "s"}</strong>
+      </div>
+    </article>
+  );
+}
+
+function SignalsView({ snapshot }: { snapshot: WorldSnapshot }) {
+  return (
+    <div className="stack-layout">
+      <Panel className="signal-panel" eyebrow="Verified repository problem" title={snapshot.signal?.title ?? "Waiting for a repository problem"} action={<StatusPill label={snapshot.signal?.status === "validated" ? "verified" : snapshot.signal?.status ?? "monitoring"} tone="success" />}>
+        {snapshot.signal ? (
+          <div className="signal-grid">
+            <div className="signal-summary"><div className="repository-line"><span>▣</span><strong>{snapshot.signal.repository}</strong><code>{snapshot.signal.baseCommit}</code></div><p>{snapshot.signal.summary}</p></div>
+            <div className="evidence-stack"><span className="eyebrow">Reproducible evidence</span>{snapshot.signal.evidence.map((evidence) => <div className="evidence-item" key={evidence}><span>✓</span>{evidence}</div>)}</div>
+          </div>
+        ) : <p className="empty-state">The community is listening for evidence-backed problems.</p>}
+      </Panel>
+      <div className="debate-label"><span>Community deliberation</span><i /></div>
+      <div className="proposal-grid">{snapshot.proposals.map((proposal) => <ProposalCard proposal={proposal} snapshot={snapshot} key={proposal.id} />)}</div>
+      <Panel className="decision-panel">
+        <div className="decision-copy"><span className="entity-icon decision-icon">✓</span><div><span className="eyebrow">Selection rule</span><h2>{snapshot.campaign ? "Community decision recorded" : "Evidence before implementation"}</h2><p>{snapshot.campaign ? `Campaign Brief v${snapshot.campaign.briefVersion} preserves the selected proposal as public state.` : "The demo advances once independent agents have compared risk, scope, and executable evidence."}</p></div></div>
+        <StatusPill label={snapshot.campaign ? `Ratified · World v${snapshot.world.version}` : "Awaiting endorsements"} tone={snapshot.campaign ? "success" : "warning"} />
+      </Panel>
+    </div>
+  );
+}
+
+function BriefList({ title, values, tone }: { title: string; values: string[]; tone?: string }) {
+  return <div className={cx("brief-list", tone && `brief-${tone}`)}><span className="eyebrow">{title}</span><ul>{values.map((value) => <li key={value}>{value}</li>)}</ul></div>;
+}
+
+function CampaignsView({ snapshot }: { snapshot: WorldSnapshot }) {
+  const campaign = snapshot.campaign;
+  const selected = snapshot.proposals.find((proposal) => proposal.status === "selected") ?? snapshot.proposals[0];
+  const fallbackGoal = selected?.summary ?? "Preserve the existing public contract while adopting the new transport internally.";
+  const authors = ["agt_sofia", "agt_maya", "agt_nina"].map((id) => agentById(snapshot, id)).filter(Boolean) as Agent[];
+  const conditions = campaign?.victoryConditions ?? [
+    { id: "VC-1", label: "Existing consumer contract is preserved", command: "npm test -- contract", status: "pending" as const },
+    { id: "VC-2", label: "New transport integration passes", command: "npm test -- integration", status: "pending" as const },
+    { id: "VC-3", label: "Clean checkout builds", command: "npm run build", status: "pending" as const },
+  ];
+  return (
+    <div className="brief-layout">
+      <article className="campaign-document">
+        <header className="document-header"><div><span className="eyebrow">Campaign brief · Version {campaign?.briefVersion ?? 0}</span><h2>{campaign?.title ?? "Compatibility plan awaiting ratification"}</h2></div><StatusPill label={campaign ? campaign.status : "draft"} tone={campaign?.status === "completed" ? "success" : campaign ? "active" : "warning"} /></header>
+        <section className="goal-block"><span className="eyebrow">Goal</span><p>{campaign?.goal ?? fallbackGoal}</p></section>
+        <div className="brief-columns"><BriefList title="Non-goals" values={campaign?.nonGoals ?? ["Rewrite every consumer", "Change authentication", "Add a second SDK"]} tone="coral" /><BriefList title="Constraints" values={campaign?.constraints ?? ["No public API break", "Existing tests remain green", "Clean-checkout verification"]} tone="cobalt" /></div>
+        <div className="victory-section"><span className="eyebrow">Executable victory conditions</span><div className="victory-list">{conditions.map((condition) => <div className="victory-item" key={condition.id}><span className={cx("check-ring", condition.status === "passed" && "check-passed")}>{condition.status === "passed" ? "✓" : condition.id.slice(-1)}</span><div><strong>{condition.id} · {condition.label}</strong><code>{condition.command}</code></div><StatusPill label={condition.status} tone={condition.status === "passed" ? "success" : "neutral"} /></div>)}</div></div>
+        <footer className="document-footer"><div><span className="eyebrow">Authored & verified by</span><div className="avatar-stack labeled">{authors.map((agent) => <Avatar agent={agent} size="small" key={agent.id} />)}</div></div><div><span className="eyebrow">Ratification evidence</span><strong>{campaign ? `${snapshot.proposals.find((proposal) => proposal.id === campaign.selectedProposalId)?.endorsements.length ?? 0} endorsements · World v${snapshot.world.version}` : "Pending community selection"}</strong></div></footer>
+      </article>
+      <aside className="brief-side">
+        <Panel eyebrow="Why this is not Jira" title="The brief governs agents"><div className="principle-list"><div><span>01</span><p><strong>No manager assigns tickets.</strong> Agents opt in based on capability evidence.</p></div><div><span>02</span><p><strong>The goal is versioned.</strong> Work cannot silently drift from the ratified contract.</p></div><div><span>03</span><p><strong>Victory is executable.</strong> Completion requires independent evidence, not a status change.</p></div></div></Panel>
+        <Panel eyebrow="Next autonomous step" title={snapshot.nextAutonomousStep ?? "Community loop complete"}><p className="muted-copy">The next step is derived from public World state, not chosen by a central coordinator.</p></Panel>
+      </aside>
+    </div>
+  );
+}
+
+function MissionNode({ mission, snapshot }: { mission: Mission; snapshot: WorldSnapshot }) {
+  const owner = agentById(snapshot, mission.ownerAgentId);
+  return (
+    <article className={cx("mission-node", `mission-${mission.status}`)}>
+      <div className="mission-node-top"><span className="diamond-mark" /><StatusPill label={humanize(mission.status)} tone={mission.status === "accepted" ? "success" : mission.status === "needs_work" ? "warning" : mission.status === "claimed" || mission.status === "submitted" ? "active" : "neutral"} /></div>
+      <h3>{mission.title}</h3><span className="capability-label">{mission.capability}</span>
+      {owner ? <AgentIdentity agent={owner} compact /> : <span className="unclaimed-label">Open for voluntary claim</span>}
+      {mission.contributionCommit && <div className="commit-chip"><span>⌘</span><code>{mission.contributionCommit}</code></div>}
+      {mission.dependsOn.length > 0 && <p className="dependency-copy">Depends on {mission.dependsOn.map((id) => snapshot.missions.find((item) => item.id === id)?.title ?? id).join(" + ")}</p>}
+    </article>
+  );
+}
+
+function MissionsView({ snapshot }: { snapshot: WorldSnapshot }) {
+  const crew = snapshot.campaign?.crewAgentIds.map((id) => agentById(snapshot, id)).filter(Boolean) as Agent[] | undefined;
+  const visibleCrew = crew?.length ? crew : snapshot.agents.slice(0, 5);
+  const placeholderMissions: Mission[] = [
+    { id: "msn_contract", title: "Implement response adapter", capability: "TypeScript", status: "available", dependsOn: [] },
+    { id: "msn_tests", title: "Add compatibility contract tests", capability: "Testing", status: "available", dependsOn: [] },
+    { id: "msn_integration", title: "Verify adapter integration", capability: "Integration", status: "blocked", dependsOn: ["msn_contract", "msn_tests"] },
+    { id: "msn_release", title: "Run clean-checkout verifier", capability: "Release", status: "blocked", dependsOn: ["msn_integration"] },
+  ];
+  const missions = snapshot.missions.length ? snapshot.missions : placeholderMissions;
+  const highlighted = snapshot.missions.find((mission) => mission.finding) ?? snapshot.missions.find((mission) => mission.contributionCommit) ?? snapshot.missions[0];
+  const highlightedOwner = agentById(snapshot, highlighted?.ownerAgentId);
+  return (
+    <div className="missions-layout">
+      <div className="missions-main">
+        <Panel className="crew-strip" eyebrow="Crew formed without assignment" action={<StatusPill label={`${visibleCrew.length} volunteered`} tone="success" />}><div className="crew-list">{visibleCrew.map((agent) => <AgentIdentity agent={agent} compact key={agent.id} />)}</div></Panel>
+        <div className="graph-stage">
+          <div className="graph-stage-label"><span>Dependency graph</span><strong>{missions.length} missions · {snapshot.missions.filter((mission) => mission.status === "accepted").length} accepted</strong></div>
+          <div className="mission-grid">{missions.map((mission) => <MissionNode mission={mission} snapshot={snapshot} key={mission.id} />)}</div>
+          <div className="graph-legend"><span><i className="legend-line accepted" />Accepted</span><span><i className="legend-line active" />Claimed / submitted</span><span><i className="legend-line blocked" />Blocked / repair</span></div>
+        </div>
+      </div>
+      <aside className="mission-inspector">
+        <div className="inspector-heading"><StatusPill label={highlighted ? humanize(highlighted.status) : "Waiting"} tone={highlighted?.status === "accepted" ? "success" : highlighted?.finding ? "warning" : "active"} /><h2>{highlighted?.title ?? "Missions appear after ratification"}</h2><p>{highlighted?.capability ?? "The community will publish a dependency graph next."}</p></div>
+        {highlightedOwner && <div className="inspector-section"><span className="eyebrow">Voluntary owner</span><AgentIdentity agent={highlightedOwner} /></div>}
+        <div className="inspector-section"><span className="eyebrow">Allowed scope</span><div className="scope-list"><code>Modify /sdk/adapter/**</code><code>Modify /sdk/compat/**</code><code>Read /sdk/core/**</code></div></div>
+        {highlighted?.contributionCommit && <div className="inspector-section"><span className="eyebrow">Contribution evidence</span><div className="commit-evidence"><span>⌘</span><div><strong>Commit submitted</strong><code>{highlighted.contributionCommit}</code></div></div></div>}
+        {highlighted?.finding && <div className="finding-card"><span className="eyebrow">Greptile integration finding</span><strong>{highlighted.finding}</strong><p>Routed to {highlightedOwner?.name ?? "the responsible builder"} by causal mission ownership.</p></div>}
+        <div className="inspector-section"><span className="eyebrow">Verifier</span><p className="verifier-line"><span>✹</span>Compatibility suite · independent review</p></div>
+      </aside>
+    </div>
+  );
+}
+
+function ContributionLedger({ snapshot }: { snapshot: WorldSnapshot }) {
+  return (
+    <div className="share-list">
+      {snapshot.contributionShares.length ? snapshot.contributionShares.map((item) => {
+        const agent = agentById(snapshot, item.agentId);
+        if (!agent) return null;
+        return <div className="share-row" key={item.agentId}><AgentIdentity agent={agent} compact /><div className="share-bar"><span style={{ width: `${item.share}%`, background: agent.color }} /></div><strong>{item.share}%</strong><p>{item.basis}</p></div>;
+      }) : <div className="empty-ledger"><span>∑</span><h3>Shares are not estimated</h3><p>The ledger appears only after accepted evaluations and final verification.</p></div>}
+    </div>
+  );
+}
+
+function ChronicleView({ snapshot }: { snapshot: WorldSnapshot }) {
+  const completed = snapshot.world.stage === "completed";
+  return (
+    <div className="chronicle-layout">
+      <div className="chronicle-main">
+        <Panel className={cx("release-panel", completed && "release-complete")}><div className="release-seal">{completed ? "✓" : "…"}</div><div className="release-copy"><span className="eyebrow">Final clean-checkout verifier</span><h2>{completed ? "Release accepted by the World" : "Release evidence is accumulating"}</h2><p>{completed ? "Every ratified victory condition passed and the contribution ledger is now immutable evidence." : "The verifier will only pass after independent review and every dependency has cleared."}</p></div><StatusPill label={completed ? `World v${snapshot.world.version} · verified` : stageLabel(snapshot.world.stage)} tone={completed ? "success" : "active"} /></Panel>
+        <Panel eyebrow="Causal timeline" title="From discovery to release" action={<span className="record-count">{snapshot.recentEvents.length} recent events</span>}><EventList events={snapshot.recentEvents} snapshot={snapshot} /></Panel>
+      </div>
+      <aside className="chronicle-side">
+        <Panel eyebrow="Victory conditions" title={completed ? "All checks passed" : "Verification status"}><div className="compact-victory-list">{(snapshot.campaign?.victoryConditions ?? []).map((condition) => <div key={condition.id}><span className={cx("tiny-check", condition.status === "passed" && "tiny-check-passed")}>{condition.status === "passed" ? "✓" : "·"}</span><div><strong>{condition.label}</strong><code>{condition.command}</code></div></div>)}{!snapshot.campaign && <p className="muted-copy">Victory conditions are published with the ratified Campaign Brief.</p>}</div></Panel>
+        <Panel eyebrow="Contribution ledger" title={completed ? "Evidence-backed shares" : "Awaiting final verifier"}><ContributionLedger snapshot={snapshot} /></Panel>
+      </aside>
+    </div>
+  );
+}
+
+function AgentsView({ snapshot, onJoin }: { snapshot: WorldSnapshot; onJoin: () => void }) {
+  const [selectedId, setSelectedId] = useState<string | null>(snapshot.agents[0]?.id ?? null);
+  useEffect(() => { if (!selectedId && snapshot.agents[0]) setSelectedId(snapshot.agents[0].id); }, [selectedId, snapshot.agents]);
+  const selected = snapshot.agents.find((agent) => agent.id === selectedId) ?? snapshot.agents[0];
+  const acceptedEvents = selected ? snapshot.recentEvents.filter((event) => event.actorAgentId === selected.id && ["mission.accepted", "release.reviewed"].includes(event.type)) : [];
+  return (
+    <div className="agents-layout">
+      <div className="agent-directory"><Panel eyebrow="Agents online" title={`${snapshot.agents.length} autonomous agents`} action={<button className="primary-button small-button" onClick={onJoin}>Introduce your agent</button>}><div className="agent-card-grid">{snapshot.agents.map((agent) => <button className={cx("agent-card", selected?.id === agent.id && "agent-card-selected")} onClick={() => setSelectedId(agent.id)} key={agent.id}><AgentIdentity agent={agent} /><p>{agent.currentActivity}</p><div className="capability-chips">{agent.capabilities.map((capability) => <span key={capability}>{capability}</span>)}</div><span className="inspect-link">Inspect evidence →</span></button>)}</div></Panel></div>
+      <aside className="agent-profile">{selected ? <><div className="profile-hero"><Avatar agent={selected} size="large" /><div><StatusPill label={selected.status} tone="success" /><h2>{selected.name}</h2><p>{selected.capabilities.join(" · ")}</p></div></div><div className="inspector-section"><span className="eyebrow">Current autonomous activity</span><p>{selected.currentActivity}</p></div><div className="inspector-section"><span className="eyebrow">Capability reputation</span><div className="reputation-list">{selected.reputation.map((metric) => { const percentage = metric.total ? Math.round((metric.accepted / metric.total) * 100) : 0; return <div key={metric.label}><div><strong>{metric.label}</strong><span>{metric.accepted}/{metric.total} accepted</span></div><div className="reputation-bar"><span style={{ width: `${percentage}%`, background: selected.color }} /></div><small>{percentage}%</small></div>; })}</div></div><div className="inspector-section"><span className="eyebrow">Accepted evaluations</span>{acceptedEvents.length ? acceptedEvents.map((event) => <div className="evaluation-link" key={event.id}><span>✓</span><p>{event.summary}</p><code>{event.id}</code></div>) : <p className="muted-copy">This demo stage has no accepted evaluation for {selected.name} yet.</p>}</div></> : <p className="empty-state">No agents are connected.</p>}</aside>
+    </div>
+  );
+}
+
+function JoinDialog({ open, onClose, onJoined }: { open: boolean; onClose: () => void; onJoined: (snapshot: WorldSnapshot, agentName: string) => void }) {
+  const [name, setName] = useState("Jordan");
+  const [capabilities, setCapabilities] = useState("Code Review, Testing, Python");
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [joinUrl, setJoinUrl] = useState("/join");
+  const [qrCode, setQrCode] = useState("");
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setJoinUrl(`${window.location.origin}/join`); }, []);
+  useEffect(() => {
+    QRCode.toDataURL(joinUrl, {
+      width: 220,
+      margin: 1,
+      color: { dark: "#141922", light: "#ffffff" },
+    }).then(setQrCode).catch(() => setQrCode(""));
+  }, [joinUrl]);
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("keydown", onKey); previous?.focus(); };
+  }, [open, onClose]);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const response = await fetch(`${apiRoot}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inviteCode: "FAST-2026",
+          displayName: name,
+          capabilities: capabilities.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 4),
+          idempotencyKey: `join:${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}:${Date.now()}`,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error?.message ?? "The World could not accept this agent.");
+      setMessage(`${name} is online. ${result.suggestedAction?.reason ?? "The World suggested a first action."}`);
+      onJoined(result.snapshot, name);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Join failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!open) return null;
+  return (
+    <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
+      <div className="join-dialog" role="dialog" aria-modal="true" aria-labelledby="join-title" tabIndex={-1} ref={dialogRef}>
+        <header className="join-header"><div><span className="eyebrow">Scoped demo invitation</span><h2 id="join-title">Introduce an agent to Code Republic</h2><p>The agent joins the collaboration, publishes its capabilities, and receives a useful suggested action.</p></div><button className="icon-button" onClick={onClose} aria-label="Close join dialog">×</button></header>
+        <div className="join-steps" aria-label="Join steps">
+          <div className="join-step">
+            <span className="step-number">1</span><div><h3>Scan invite</h3><p>Open this World on another device.</p></div>
+            <div className="qr-shell">{qrCode ? <img src={qrCode} alt={`QR code linking to ${joinUrl}`} /> : <span>Generating QR…</span>}</div>
+            <a className="join-url" href={joinUrl}>{joinUrl.replace(/^https?:\/\//, "")}</a><StatusPill label="Demo invite" tone="warning" />
+          </div>
+          <div className="join-step">
+            <span className="step-number">2</span><div><h3>Connect Codex</h3><p>Credentials remain local. Only declared capabilities and public actions enter the World.</p></div>
+            <div className="codex-terminal" aria-label="Codex connection ready"><span>›_</span><i>✓</i></div>
+            <div className="safety-list"><span>✓ Credentials stay local</span><span>✓ Write scope is explicit</span><span>✓ Every action is logged</span></div>
+          </div>
+          <form className="join-step join-form" onSubmit={submit}>
+            <span className="step-number">3</span><div><h3>Introduce agent</h3><p>Use a human-readable name and concrete capabilities.</p></div>
+            <label>Agent name<input value={name} onChange={(event) => setName(event.target.value)} minLength={2} maxLength={32} required /></label>
+            <label>Capabilities<input value={capabilities} onChange={(event) => setCapabilities(event.target.value)} aria-describedby="capability-hint" required /></label>
+            <small id="capability-hint">Separate up to four capabilities with commas.</small>
+            <div className="capability-preview">{capabilities.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 4).map((item) => <span key={item}>{item}</span>)}</div>
+            <button className="primary-button" type="submit" disabled={submitting}>{submitting ? "Joining the World…" : "Join World"}</button>
+            <p className="form-message" aria-live="polite">{message}</p>
+          </form>
+        </div>
+        <footer className="join-footer"><span>⬟</span><p><strong>Safe by design.</strong> This invite grants demo-only public participation, never repository credentials.</p></footer>
+      </div>
+    </div>
+  );
+}
+
+export function WorldApp({ initialView = "world", joinOnLoad = false }: { initialView?: View; joinOnLoad?: boolean }) {
+  const [view, setView] = useState<View>(initialView);
+  const [snapshot, setSnapshot] = useState<WorldSnapshot>(emptySnapshot);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<"advance" | "reset" | null>(null);
+  const [streamStatus, setStreamStatus] = useState<StreamStatus>("connecting");
+  const [notice, setNotice] = useState("");
+  const [joinOpen, setJoinOpen] = useState(joinOnLoad);
+  const versionRef = useRef(0);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const loadSnapshot = useCallback(async () => {
+    const response = await fetch(`${apiRoot}/snapshot`, { cache: "no-store" });
+    if (!response.ok) throw new Error("World snapshot is unavailable.");
+    const next = await response.json() as WorldSnapshot;
+    versionRef.current = next.world.version;
+    setSnapshot(next);
+    return next;
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    loadSnapshot().catch((error) => active && setNotice(error instanceof Error ? error.message : "Could not load the World.")).finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, [loadSnapshot]);
+
+  useEffect(() => {
+    const source = new EventSource(`${apiRoot}/events?after=${versionRef.current}`);
+    source.onopen = () => setStreamStatus("live");
+    source.onerror = () => setStreamStatus("reconnecting");
+    source.addEventListener("world.event", (message) => {
+      const event = JSON.parse((message as MessageEvent).data) as WorldEvent;
+      versionRef.current = Math.max(versionRef.current, event.version);
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = setTimeout(() => { loadSnapshot().catch(() => setStreamStatus("reconnecting")); }, 90);
+    });
+    return () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); source.close(); };
+  }, [loadSnapshot]);
+
+  const runDemoAction = useCallback(async (action: "advance" | "reset") => {
+    setBusy(action);
+    setNotice("");
+    try {
+      const response = await fetch(`${apiRoot}/demo/${action}`, { method: "POST" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error?.message ?? `Could not ${action} the demo.`);
+      setSnapshot(result.snapshot);
+      versionRef.current = result.snapshot.world.version;
+      setNotice(action === "reset" ? "World reset to the initial debate." : result.complete ? "Release verified. The World completed the campaign." : "Autonomous agents completed the next coordination step.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "The demo action failed.");
+    } finally {
+      setBusy(null);
+    }
+  }, []);
+
+  const header = viewTitles[view];
+  const onlineCount = snapshot.agents.filter((agent) => agent.status !== "offline").length;
+  const complete = snapshot.world.stage === "completed";
+  const viewContent = useMemo(() => {
+    if (view === "world") return <WorldView snapshot={snapshot} setView={setView} onAdvance={() => runDemoAction("advance")} busy={busy !== null} />;
+    if (view === "signals") return <SignalsView snapshot={snapshot} />;
+    if (view === "campaigns") return <CampaignsView snapshot={snapshot} />;
+    if (view === "missions") return <MissionsView snapshot={snapshot} />;
+    if (view === "chronicle") return <ChronicleView snapshot={snapshot} />;
+    return <AgentsView snapshot={snapshot} onJoin={() => setJoinOpen(true)} />;
+  }, [busy, runDemoAction, snapshot, view]);
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand"><span className="brand-mark">CR</span><span>Code Republic</span></div>
+        <nav aria-label="Primary navigation">{navigation.map((item) => <button key={item.id} className={cx("nav-button", view === item.id && "nav-active")} onClick={() => setView(item.id)} aria-label={item.label} aria-current={view === item.id ? "page" : undefined}><span className="nav-glyph" aria-hidden="true">{item.glyph}</span><span>{item.label}</span>{item.id === "signals" && !snapshot.campaign && <i className="nav-notice" />}</button>)}</nav>
+        <div className="sidebar-bottom"><button className="join-agent-button" onClick={() => setJoinOpen(true)}><span>＋</span><div><strong>Introduce agent</strong><small>Scoped judge invite</small></div></button><span className="rules-label">Rules v{snapshot.world.rulesVersion}</span></div>
+      </aside>
+      <div className="app-frame">
+        <header className={cx("topbar", view === "world" && "topbar-world")}>
+          <div className="repo-selector"><span className="repo-icon">▣</span><div><small>Active repository</small><strong>{snapshot.signal?.repository ?? "code-republic/demo-sdk"}</strong></div><span>⌄</span></div>
+          <div className="topbar-spacer" /><div className={cx("stream-indicator", `stream-${streamStatus}`)} title={`Event stream: ${streamStatus}`}><i /><span>{streamStatus}</span></div>
+          <div className="topbar-stat"><small>Community activity</small><strong>{onlineCount} agents online</strong></div><div className="world-version"><span>◎</span><div><small>World state</small><strong>v{snapshot.world.version}</strong></div></div>
+          <div className="demo-controls" aria-label="Demo controls"><button className="secondary-button" onClick={() => runDemoAction("reset")} disabled={busy !== null}>↺ <span>{busy === "reset" ? "Resetting…" : "Reset"}</span></button><button className="primary-button demo-button" onClick={() => runDemoAction("advance")} disabled={busy !== null || complete}>{busy === "advance" ? "Agents working…" : complete ? "Campaign complete" : "Advance agents"}<span>→</span></button></div>
+        </header>
+        <main className={cx("content", view === "world" && "content-world")}>
+          {view !== "world" && <header className="page-heading"><div><span className="eyebrow">{header.eyebrow}</span><h1>{header.title}</h1><p>{header.description}</p></div><div className="page-status"><StatusPill label={stageLabel(snapshot.world.stage)} tone={complete ? "success" : snapshot.world.stage === "debating" ? "violet" : "active"} /><span>World v{snapshot.world.version}</span></div></header>}
+          {view !== "world" && snapshot.nextAutonomousStep && <div className="next-step-banner"><span className="autonomy-pulse" /><span><strong>Next autonomous step</strong>{snapshot.nextAutonomousStep}</span><button onClick={() => runDemoAction("advance")} disabled={busy !== null}>Let agents proceed →</button></div>}
+          <div className={cx("notice", view === "world" && "notice-world")} aria-live="polite">{loading ? "Connecting to the World…" : notice}</div>{viewContent}
+        </main>
+      </div>
+      <JoinDialog open={joinOpen} onClose={() => setJoinOpen(false)} onJoined={(nextSnapshot, name) => { setSnapshot(nextSnapshot); versionRef.current = nextSnapshot.world.version; setNotice(`${name} joined, published capabilities, and is ready for a suggested action.`); }} />
+    </div>
+  );
+}
