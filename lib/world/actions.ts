@@ -7,7 +7,7 @@ import type { Campaign, EventDraft, Mission, WorldAction, WorldSnapshot } from "
 export { WorldRuleError };
 
 export const worldActionSchema = z.object({
-  type: z.enum(["agent.introduce", "campaign.endorse", "crew.join", "mission.claim", "review.submit", "evaluation.submit"]),
+  type: z.enum(["agent.introduce", "campaign.endorse", "crew.join", "mission.claim", "contribution.submit", "review.submit", "evaluation.submit", "campaign.finalize"]),
   actorAgentId: z.string().min(1),
   targetId: z.string().min(1),
   expectedWorldVersion: z.number().int().nonnegative(),
@@ -158,6 +158,29 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
         idempotencyKey: action.idempotencyKey,
       }];
     }
+    case "contribution.submit": {
+      const mission = requireMission(snapshot, action.targetId);
+      if (mission.ownerAgentId !== action.actorAgentId) {
+        throw new WorldRuleError("MISSION_NOT_OWNED", "Only the Agent holding the Mission lease can submit its Contribution.", 403);
+      }
+      if (!["claimed", "needs_work"].includes(mission.status)) {
+        throw new WorldRuleError("MISSION_NOT_SUBMITTABLE", "Only claimed or routed-back work can be submitted.", 409);
+      }
+      const commit = String(action.payload?.commit ?? "");
+      if (!/^[a-f0-9]{7,64}$/i.test(commit)) {
+        throw new WorldRuleError("EVIDENCE_REQUIRED", "A Git commit SHA is required as Contribution evidence.", 409);
+      }
+      const repaired = mission.status === "needs_work";
+      return [{
+        type: repaired ? "contribution.repaired" : "contribution.submitted",
+        actorAgentId: action.actorAgentId,
+        targetId: action.targetId,
+        summary: action.summary,
+        tone: repaired ? "active" : "info",
+        payload: { ...action.payload, commit },
+        idempotencyKey: action.idempotencyKey,
+      }];
+    }
     case "review.submit": {
       const mission = requireMission(snapshot, action.targetId);
       if (mission.ownerAgentId === action.actorAgentId) {
@@ -200,6 +223,50 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
         summary: action.summary,
         tone: "success",
         payload: action.payload ?? {},
+        idempotencyKey: action.idempotencyKey,
+      }];
+    }
+    case "campaign.finalize": {
+      if (!snapshot.campaign || snapshot.campaign.id !== action.targetId || snapshot.campaign.status !== "active") {
+        throw new WorldRuleError("CAMPAIGN_NOT_ACTIVE", "Only an active Campaign can be finalized.", 409);
+      }
+      const actor = requireAgent(snapshot, action.actorAgentId);
+      if (!actor.capabilities.includes("Reliability")) {
+        throw new WorldRuleError("VERIFIER_REQUIRED", "A Reliability Agent must finalize the Campaign.", 403);
+      }
+      if (snapshot.missions.some((mission) => mission.status !== "accepted")) {
+        throw new WorldRuleError("MISSIONS_INCOMPLETE", "Every Mission must be independently accepted before finalization.", 409);
+      }
+      const pullRequest = String(action.payload?.pullRequest ?? "");
+      const headCommit = String(action.payload?.headCommit ?? "");
+      if (action.payload?.mergeable !== true || action.payload?.checks !== "passed") {
+        throw new WorldRuleError("MERGE_GATES_FAILED", "The PR must be conflict-free with all required checks passed.", 409);
+      }
+      if (!/^https:\/\/github\.com\/.+\/pull\/\d+$/.test(pullRequest) || !/^[a-f0-9]{7,64}$/i.test(headCommit)) {
+        throw new WorldRuleError("EVIDENCE_REQUIRED", "The exact GitHub PR and head commit are required.", 409);
+      }
+      const shares = Array.isArray(action.payload?.shares) ? action.payload.shares : [];
+      const validShares = shares.every((item) => {
+        if (!item || typeof item !== "object") return false;
+        const share = item as Record<string, unknown>;
+        return typeof share.agentId === "string"
+          && snapshot.agents.some((agent) => agent.id === share.agentId)
+          && typeof share.share === "number"
+          && share.share >= 0
+          && typeof share.basis === "string"
+          && share.basis.length > 0;
+      });
+      const totalShare = shares.reduce((sum, item) => sum + Number((item as Record<string, unknown>).share ?? 0), 0);
+      if (!validShares || totalShare !== 100) {
+        throw new WorldRuleError("INVALID_SHARES", "Evidence-backed contribution shares must name citizens and total 100.", 409);
+      }
+      return [{
+        type: "campaign.completed",
+        actorAgentId: action.actorAgentId,
+        targetId: action.targetId,
+        summary: action.summary,
+        tone: "success",
+        payload: { ...action.payload, pullRequest, headCommit, shares },
         idempotencyKey: action.idempotencyKey,
       }];
     }

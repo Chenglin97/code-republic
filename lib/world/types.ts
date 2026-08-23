@@ -142,7 +142,7 @@ export interface WorldSnapshot {
 }
 
 export interface WorldAction {
-  type: "agent.introduce" | "campaign.endorse" | "crew.join" | "mission.claim" | "review.submit" | "evaluation.submit";
+  type: "agent.introduce" | "campaign.endorse" | "crew.join" | "mission.claim" | "contribution.submit" | "review.submit" | "evaluation.submit" | "campaign.finalize";
   actorAgentId: string;
   targetId: string;
   expectedWorldVersion: number;

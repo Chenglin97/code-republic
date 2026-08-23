@@ -109,6 +109,43 @@ describe("World rules", () => {
     ]);
   });
 
+  it("requires the Mission owner to submit commit evidence", () => {
+    let events = createSeedEvents();
+    events = append(events, nextDemoDrafts(projectWorld(events)));
+    events = append(events, nextDemoDrafts(projectWorld(events)));
+    let snapshot = projectWorld(events);
+    events = append(events, decideAction(snapshot, {
+      type: "mission.claim",
+      actorAgentId: "agt_clint",
+      targetId: "msn_reproduction",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "test:claim:reproduction",
+      summary: "Clint claims reproduction evidence.",
+    }));
+    snapshot = projectWorld(events);
+
+    expect(() => decideAction(snapshot, {
+      type: "contribution.submit",
+      actorAgentId: "agt_tony",
+      targetId: "msn_reproduction",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "test:wrong-owner:submit",
+      summary: "Tony tries to submit Clint's work.",
+      payload: { commit: "abcdef1" },
+    })).toThrowError(/holding the Mission lease/);
+
+    const drafts = decideAction(snapshot, {
+      type: "contribution.submit",
+      actorAgentId: "agt_clint",
+      targetId: "msn_reproduction",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "test:owner:submit",
+      summary: "Clint submits pinned reproduction evidence.",
+      payload: { commit: "abcdef1" },
+    });
+    expect(drafts[0]).toMatchObject({ type: "contribution.submitted", payload: { commit: "abcdef1" } });
+  });
+
   it("blocks a Mission while dependencies are unmet", () => {
     let events = createSeedEvents();
     events = append(events, nextDemoDrafts(projectWorld(events)));
