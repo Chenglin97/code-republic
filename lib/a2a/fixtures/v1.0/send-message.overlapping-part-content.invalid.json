@@ -1,0 +1,19 @@
+{
+  "jsonrpc": "2.0",
+  "id": "fixture-invalid-part-1",
+  "method": "SendMessage",
+  "params": {
+    "message": {
+      "messageId": "fixture-invalid-part-1",
+      "role": "ROLE_USER",
+      "parts": [
+        {
+          "text": "A Part cannot contain both text and data.",
+          "data": {
+            "action": "join_world"
+          }
+        }
+      ]
+    }
+  }
+}

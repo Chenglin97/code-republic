@@ -6,10 +6,13 @@ import {
   type A2AJsonRpcRequest,
   type A2AJsonRpcSuccess,
   type A2AMessage,
-  type CodeRepublicJoinHandoff,
-  type CodeRepublicJoinIntent,
 } from "./contract";
-import { validateAgentCard } from "./card";
+import {
+  codeRepublicIndependentAgentAdapter,
+  type IndependentAgentAdapter,
+} from "./adapter";
+
+export { buildJoinHandoff } from "./adapter";
 
 export const CODE_REPUBLIC_JOIN_MEDIA_TYPE = "application/vnd.code-republic.join+json";
 export const CODE_REPUBLIC_HANDOFF_MEDIA_TYPE = "application/vnd.code-republic.join-handoff+json";
@@ -23,49 +26,6 @@ const PUSH_METHODS = new Set([
 
 function slug(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 60) || "agent";
-}
-
-function conciseDisplayName(value: string) {
-  const displayName = value.trim().replace(/\s+/g, " ").slice(0, 32);
-  return displayName.length >= 2 ? displayName : `${displayName} Agent`.slice(0, 32);
-}
-
-export function buildJoinHandoff(intent: CodeRepublicJoinIntent): CodeRepublicJoinHandoff {
-  const validation = validateAgentCard(intent.agentCard);
-  if (!validation.valid) {
-    throw new Error(validation.issues.map((issue) => `${issue.path}: ${issue.message}`).join("; "));
-  }
-
-  const capabilities = Array.from(new Set(validation.card.skills.flatMap((skill) => skill.tags)))
-    .map((capability) => capability.trim())
-    .filter((capability) => capability.length >= 2 && capability.length <= 40)
-    .slice(0, 4);
-
-  return {
-    status: "invite_required",
-    worldId: intent.worldId,
-    sourceAgentCardUrl: intent.agentCardUrl,
-    discoveredAgent: {
-      name: validation.card.name,
-      version: validation.card.version,
-      skills: validation.card.skills.map((skill) => skill.id),
-    },
-    nativeJoin: {
-      method: "POST",
-      endpoint: `/api/worlds/${encodeURIComponent(intent.worldId)}/join`,
-      body: {
-        inviteCode: "<one-time-invite>",
-        displayName: conciseDisplayName(validation.card.name),
-        capabilities: capabilities.length > 0 ? capabilities : ["a2a-agent"],
-        idempotencyKey: `a2a:${intent.worldId}:${slug(validation.card.name)}:${slug(validation.card.version)}`,
-      },
-    },
-    warnings: [
-      ...validation.warnings,
-      "Capability declarations are discovery metadata, not reputation evidence.",
-      "The bridge does not fetch the supplied Agent Card URL in this slice.",
-    ],
-  };
 }
 
 function jsonRpcError(
@@ -115,7 +75,10 @@ function responseMessage(request: A2AMessage, parts: A2AMessage["parts"]): A2AMe
   };
 }
 
-function handleSendMessage(request: A2AJsonRpcRequest): A2AJsonRpcSuccess | A2AJsonRpcError {
+function handleSendMessage(
+  request: A2AJsonRpcRequest,
+  independentAgentAdapter: IndependentAgentAdapter,
+): A2AJsonRpcSuccess | A2AJsonRpcError {
   const parsedMessage = a2aMessageSchema.safeParse(request.params.message);
   if (!parsedMessage.success || parsedMessage.data.role !== "ROLE_USER") {
     return invalidA2AParams(request.id, "SendMessage requires a valid ROLE_USER message with at least one part.");
@@ -146,7 +109,7 @@ function handleSendMessage(request: A2AJsonRpcRequest): A2AJsonRpcSuccess | A2AJ
     );
   }
 
-  const handoff = buildJoinHandoff(parsedIntent.data);
+  const handoff = independentAgentAdapter.prepareJoin(parsedIntent.data);
   return {
     jsonrpc: "2.0",
     id: request.id,
@@ -159,12 +122,24 @@ function handleSendMessage(request: A2AJsonRpcRequest): A2AJsonRpcSuccess | A2AJ
   };
 }
 
-export function handleA2AJsonRpc(input: unknown): A2AJsonRpcSuccess | A2AJsonRpcError {
+export interface A2ABridgeOptions {
+  independentAgentAdapter?: IndependentAgentAdapter;
+}
+
+export function handleA2AJsonRpc(
+  input: unknown,
+  options: A2ABridgeOptions = {},
+): A2AJsonRpcSuccess | A2AJsonRpcError {
   const parsedRequest = a2aJsonRpcRequestSchema.safeParse(input);
   if (!parsedRequest.success) return invalidA2ARequest(null);
 
   const request = parsedRequest.data;
-  if (request.method === "SendMessage") return handleSendMessage(request);
+  if (request.method === "SendMessage") {
+    return handleSendMessage(
+      request,
+      options.independentAgentAdapter ?? codeRepublicIndependentAgentAdapter,
+    );
+  }
   if (request.method === "ListTasks") {
     return { jsonrpc: "2.0", id: request.id, result: { tasks: [] } };
   }

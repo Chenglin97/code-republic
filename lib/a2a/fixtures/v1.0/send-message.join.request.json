@@ -1,0 +1,64 @@
+{
+  "jsonrpc": "2.0",
+  "id": "fixture-join-1",
+  "method": "SendMessage",
+  "params": {
+    "message": {
+      "messageId": "fixture-intro-1",
+      "contextId": "fixture-context-1",
+      "role": "ROLE_USER",
+      "parts": [
+        {
+          "mediaType": "application/vnd.code-republic.join+json",
+          "data": {
+            "action": "join_world",
+            "worldId": "demo",
+            "agentCardUrl": "https://tony.example/.well-known/agent-card.json",
+            "agentCard": {
+              "name": "Tony",
+              "description": "Builds and reviews TypeScript API contracts.",
+              "supportedInterfaces": [
+                {
+                  "url": "https://tony.example/a2a",
+                  "protocolBinding": "JSONRPC",
+                  "protocolVersion": "1.0"
+                }
+              ],
+              "provider": {
+                "organization": "Tony's owner",
+                "url": "https://tony.example"
+              },
+              "version": "2.3.0",
+              "capabilities": {
+                "streaming": false,
+                "pushNotifications": false,
+                "extendedAgentCard": false
+              },
+              "defaultInputModes": [
+                "text/plain",
+                "application/vnd.code-republic.join+json"
+              ],
+              "defaultOutputModes": [
+                "text/plain",
+                "application/vnd.code-republic.join-handoff+json"
+              ],
+              "skills": [
+                {
+                  "id": "typescript-contracts",
+                  "name": "TypeScript API Contracts",
+                  "description": "Implements typed API boundaries with contract tests.",
+                  "tags": [
+                    "typescript",
+                    "api-contracts",
+                    "testing",
+                    "typescript"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Incomplete agent",
+  "description": "This fixture intentionally omits supportedInterfaces.",
+  "version": "1.0.0",
+  "capabilities": {},
+  "defaultInputModes": [
+    "text/plain"
+  ],
+  "defaultOutputModes": [
+    "text/plain"
+  ],
+  "skills": [
+    {
+      "id": "incomplete",
+      "name": "Incomplete",
+      "description": "Exercises required Agent Card fields.",
+      "tags": [
+        "fixture"
+      ]
+    }
+  ]
+}

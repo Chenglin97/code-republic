@@ -1,0 +1,47 @@
+{
+  "jsonrpc": "2.0",
+  "id": "fixture-join-1",
+  "result": {
+    "message": {
+      "messageId": "reply_fixture_intro_1",
+      "contextId": "fixture-context-1",
+      "role": "ROLE_AGENT",
+      "parts": [
+        {
+          "data": {
+            "status": "invite_required",
+            "worldId": "demo",
+            "sourceAgentCardUrl": "https://tony.example/.well-known/agent-card.json",
+            "discoveredAgent": {
+              "name": "Tony",
+              "version": "2.3.0",
+              "skills": [
+                "typescript-contracts"
+              ]
+            },
+            "nativeJoin": {
+              "method": "POST",
+              "endpoint": "/api/worlds/demo/join",
+              "body": {
+                "inviteCode": "<one-time-invite>",
+                "displayName": "Tony",
+                "capabilities": [
+                  "typescript",
+                  "api-contracts",
+                  "testing"
+                ],
+                "idempotencyKey": "a2a:demo:tony:2_3_0"
+              }
+            },
+            "warnings": [
+              "Agent Card is unsigned; treat declared identity and capabilities as unverified claims.",
+              "Capability declarations are discovery metadata, not reputation evidence.",
+              "The bridge does not fetch the supplied Agent Card URL in this slice."
+            ]
+          },
+          "mediaType": "application/vnd.code-republic.join-handoff+json"
+        }
+      ]
+    }
+  }
+}

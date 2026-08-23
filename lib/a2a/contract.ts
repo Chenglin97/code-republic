@@ -96,11 +96,41 @@ export const codeRepublicJoinHandoffSchema = z.object({
 
 export type CodeRepublicJoinHandoff = z.infer<typeof codeRepublicJoinHandoffSchema>;
 
+const a2aPartMetadata = {
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  filename: nonEmptyText.optional(),
+  mediaType: nonEmptyText.optional(),
+};
+
+/** A2A v1.0 Part uses member-based one-of content discrimination. */
 export const a2aPartSchema = z.union([
-  z.object({ text: z.string() }).passthrough(),
   z.object({
-    data: z.record(z.string(), z.unknown()),
-    mediaType: z.string().optional(),
+    ...a2aPartMetadata,
+    text: z.string(),
+    raw: z.never().optional(),
+    url: z.never().optional(),
+    data: z.never().optional(),
+  }).passthrough(),
+  z.object({
+    ...a2aPartMetadata,
+    text: z.never().optional(),
+    raw: nonEmptyText,
+    url: z.never().optional(),
+    data: z.never().optional(),
+  }).passthrough(),
+  z.object({
+    ...a2aPartMetadata,
+    text: z.never().optional(),
+    raw: z.never().optional(),
+    url: absoluteUrl,
+    data: z.never().optional(),
+  }).passthrough(),
+  z.object({
+    ...a2aPartMetadata,
+    text: z.never().optional(),
+    raw: z.never().optional(),
+    url: z.never().optional(),
+    data: z.json(),
   }).passthrough(),
 ]);
 
