@@ -1,0 +1,35 @@
+:root {
+  --canvas: #f6f4ef;
+  --surface: #ffffff;
+  --ink: #141922;
+  --muted: #69707d;
+  --border: #dde1e6;
+  --cobalt: #2b63f1;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+main {
+  padding: 48px;
+}
