@@ -78,7 +78,7 @@ describe("World rules", () => {
     const action: WorldAction = {
       type: "mission.claim",
       actorAgentId: "agt_nina",
-      targetId: "msn_integration",
+      targetId: "msn_validation",
       expectedWorldVersion: snapshot.world.version,
       idempotencyKey: "test:blocked:claim",
       summary: "Nina wants to claim integration.",

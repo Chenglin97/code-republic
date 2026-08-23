@@ -194,6 +194,7 @@ export function projectWorld(events: WorldEvent[]): WorldSnapshot {
   }, emptySnapshot());
 
   state.recentEvents = state.recentEvents.slice(-20).reverse();
+  state.world.id = events[0]?.worldId ?? state.world.id;
   state.nextAutonomousStep = nextStep(state);
   return state;
 }

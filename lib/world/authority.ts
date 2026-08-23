@@ -14,6 +14,11 @@ export interface AppendOptions {
   idempotencyInput?: unknown;
 }
 
+export interface CreateWorldResult {
+  created: boolean;
+  snapshot: WorldSnapshot;
+}
+
 function stableValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stableValue);
   if (value && typeof value === "object") {
@@ -53,9 +58,27 @@ export class WorldAuthority {
   ) {}
 
   assertSupportedWorld(worldId: string): void {
-    if (worldId !== DEMO_WORLD_ID) {
-      throw new WorldRuleError("WORLD_NOT_FOUND", "The requested World does not exist.", 404);
+    if (!/^[a-z0-9_-]{1,80}$/i.test(worldId)) {
+      throw new WorldRuleError("INVALID_WORLD_ID", "World IDs may contain only letters, numbers, dashes, and underscores.", 400);
     }
+  }
+
+  async createWorld(worldId: string, events: WorldEvent[]): Promise<CreateWorldResult> {
+    return this.serialize(worldId, async () => {
+      this.assertSupportedWorld(worldId);
+      const existing = await this.storage.read(worldId);
+      if (existing && existing.length > 0) return { created: false, snapshot: projectWorld(existing) };
+
+      try {
+        await this.storage.append(worldId, 0, events);
+        return { created: true, snapshot: projectWorld(events) };
+      } catch (error) {
+        if (!(error instanceof StorageVersionConflict)) throw error;
+        const raced = await this.storage.read(worldId);
+        if (!raced) throw error;
+        return { created: false, snapshot: projectWorld(raced) };
+      }
+    });
   }
 
   async getSnapshot(worldId: string): Promise<WorldSnapshot> {
@@ -158,10 +181,20 @@ export class WorldAuthority {
   private async readOrSeed(worldId: string): Promise<WorldEvent[]> {
     this.assertSupportedWorld(worldId);
     const existing = await this.storage.read(worldId);
-    if (existing) return existing;
+    if (existing && existing.length > 0) return existing;
     const events = this.seed(worldId);
-    await this.storage.replace(worldId, events);
-    return events;
+    if (events.length === 0) {
+      throw new WorldRuleError("WORLD_NOT_FOUND", "The requested World does not exist.", 404);
+    }
+    try {
+      await this.storage.append(worldId, 0, events);
+      return events;
+    } catch (error) {
+      if (!(error instanceof StorageVersionConflict)) throw error;
+      const raced = await this.storage.read(worldId);
+      if (!raced) throw error;
+      return raced;
+    }
   }
 
   private async readCurrent(worldId: string): Promise<WorldEvent[]> {

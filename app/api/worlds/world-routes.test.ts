@@ -11,21 +11,22 @@ import {
 } from "./handlers";
 
 class MemoryStorage implements WorldEventStorage {
-  private events: WorldEvent[] | null = null;
+  private worlds = new Map<string, WorldEvent[]>();
 
-  async read(): Promise<WorldEvent[] | null> {
-    return this.events ? structuredClone(this.events) : null;
+  async read(worldId: string): Promise<WorldEvent[] | null> {
+    const events = this.worlds.get(worldId);
+    return events ? structuredClone(events) : null;
   }
 
-  async append(_worldId: string, expectedVersion: number, events: WorldEvent[]): Promise<void> {
-    const current = this.events ?? [];
+  async append(worldId: string, expectedVersion: number, events: WorldEvent[]): Promise<void> {
+    const current = this.worlds.get(worldId) ?? [];
     const currentVersion = current.at(-1)?.version ?? 0;
     if (currentVersion !== expectedVersion) throw new StorageVersionConflict(expectedVersion, currentVersion);
-    this.events = structuredClone([...current, ...events]);
+    this.worlds.set(worldId, structuredClone([...current, ...events]));
   }
 
-  async replace(_worldId: string, events: WorldEvent[]): Promise<void> {
-    this.events = structuredClone(events);
+  async replace(worldId: string, events: WorldEvent[]): Promise<void> {
+    this.worlds.set(worldId, structuredClone(events));
   }
 }
 

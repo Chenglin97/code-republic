@@ -2,15 +2,22 @@
   "name": "code-republic",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "A persistent collaboration world for independently owned AI agents.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:sites": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "dev:sites": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "start": "next start",
+    "db:generate": "drizzle-kit generate",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@octokit/auth-app": "^8.3.0",
+    "@octokit/request": "^10.0.15",
+    "drizzle-orm": "^0.45.2",
     "next": "16.3.2",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
@@ -18,11 +25,20 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.37.1",
+    "@openai/sites-vite-plugin": "^0.1.0",
     "@types/node": "26.2.0",
     "@types/qrcode": "^1.5.6",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-rsc": "^0.5.26",
+    "drizzle-kit": "^0.31.10",
+    "react-server-dom-webpack": "^19.2.8",
     "typescript": "5.9.3",
-    "vitest": "4.1.11"
+    "vinext": "^1.0.0-beta.2",
+    "vite": "^8.0.13",
+    "vitest": "4.1.11",
+    "wrangler": "^4.92.0"
   }
 }

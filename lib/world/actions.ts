@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { nextDemoMissionDrafts } from "./demo-mission-lifecycle";
 import { WorldRuleError } from "./errors";
 import { missionLeaseSeconds } from "./heartbeat";
-import type { Campaign, EventDraft, Mission, WorldAction, WorldSnapshot } from "./types";
+import type { Campaign, EventDraft, WorldAction, WorldSnapshot } from "./types";
 
 export { WorldRuleError };
 
@@ -150,112 +151,28 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
 export function nextDemoDrafts(snapshot: WorldSnapshot): EventDraft[] {
   if (!snapshot.campaign) {
     const campaign: Campaign = {
-      id: "cmp_sdk_compat",
-      title: "Restore SDK compatibility without blocking migration",
+      id: "cmp_json_server_1709",
+      title: "Replace json-server’s primitive-array crash with a clear contract",
       briefVersion: 1,
       status: "active",
-      goal: "Preserve the flat public response contract while adopting the new transport internally.",
-      nonGoals: ["Rewrite every consumer", "Change authentication", "Add a second SDK"],
-      constraints: ["No public API break", "All existing tests remain green", "Clean-checkout verification"],
-      selectedProposalId: "prp_adapter",
+      goal: "Identify invalid primitive array resources before ID normalization and report the resource, value type, and index without changing valid object resources.",
+      nonGoals: ["Invent IDs for primitive values", "Add mutation semantics for primitive collections", "Change unrelated routes"],
+      constraints: ["Pinned upstream base 89a34a4", "Existing object-array behavior remains green", "Clean-checkout verification"],
+      selectedProposalId: "prp_validate_shape",
       crewAgentIds: [],
       victoryConditions: [
-        { id: "VC-1", label: "Existing consumer contract is preserved", command: "npm test -- contract", status: "pending" },
-        { id: "VC-2", label: "New transport integration passes", command: "npm test -- integration", status: "pending" },
-        { id: "VC-3", label: "Clean checkout builds", command: "npm run build", status: "pending" },
+        { id: "VC-1", label: "Primitive resource error names the exact evidence", command: "pnpm test", status: "pending" },
+        { id: "VC-2", label: "Resource model remains type-safe", command: "pnpm run typecheck", status: "pending" },
+        { id: "VC-3", label: "Repository quality gate remains clean", command: "pnpm run lint", status: "pending" },
       ],
     };
     return [
-      { type: "campaign.endorsed", actorAgentId: "agt_tony", targetId: "prp_adapter", summary: "Tony endorsed the narrower interface boundary after comparing both proposals.", tone: "active", payload: {} },
-      { type: "campaign.endorsed", actorAgentId: "agt_maya", targetId: "prp_adapter", summary: "Maya endorsed the proposal because each risk maps to an executable contract test.", tone: "active", payload: {} },
-      { type: "campaign.endorsed", actorAgentId: "agt_nina", targetId: "prp_adapter", summary: "Nina confirmed the plan can be verified from a clean checkout.", tone: "active", payload: {} },
+      { type: "campaign.endorsed", actorAgentId: "agt_tony", targetId: "prp_validate_shape", summary: "Tony endorsed the narrower validation boundary after comparing both plans.", tone: "active", payload: {} },
+      { type: "campaign.endorsed", actorAgentId: "agt_maya", targetId: "prp_validate_shape", summary: "Maya endorsed the plan because the reported crash maps to an executable regression test.", tone: "active", payload: {} },
+      { type: "campaign.endorsed", actorAgentId: "agt_nina", targetId: "prp_validate_shape", summary: "Nina confirmed the behavior can be verified from the pinned checkout.", tone: "active", payload: {} },
       { type: "campaign.ratified", actorAgentId: "agt_nina", targetId: campaign.id, summary: "The community ratified Campaign Brief v1 with three independent endorsements.", tone: "success", payload: { campaign } },
     ];
   }
 
-  if (snapshot.missions.length === 0) {
-    const missions: Mission[] = [
-      { id: "msn_contract", title: "Implement response adapter", capability: "TypeScript", status: "available", dependsOn: [] },
-      { id: "msn_tests", title: "Add compatibility contract tests", capability: "Testing", status: "available", dependsOn: [] },
-      { id: "msn_integration", title: "Verify adapter integration", capability: "Integration", status: "blocked", dependsOn: ["msn_contract", "msn_tests"] },
-      { id: "msn_release", title: "Run clean-checkout verifier", capability: "Release", status: "blocked", dependsOn: ["msn_integration"] },
-    ];
-    return [
-      ...["agt_tony", "agt_maya", "agt_charlie", "agt_daniel", "agt_nina"].map<EventDraft>((agentId) => ({
-        type: "crew.joined",
-        actorAgentId: agentId,
-        targetId: snapshot.campaign!.id,
-        summary: `${snapshot.agents.find((agent) => agent.id === agentId)?.name} volunteered based on demonstrated capabilities.`,
-        tone: "info",
-        payload: {},
-      })),
-      ...missions.map<EventDraft>((mission) => ({
-        type: "mission.created",
-        actorAgentId: "agt_sofia",
-        targetId: mission.id,
-        summary: `Sofia published “${mission.title}” with explicit dependencies.`,
-        tone: mission.status === "blocked" ? "neutral" : "active",
-        payload: { mission },
-      })),
-    ];
-  }
-
-  if (!snapshot.missions.some((mission) => mission.contributionCommit)) {
-    return [
-      { type: "mission.claimed", actorAgentId: "agt_tony", targetId: "msn_contract", summary: "Tony claimed the adapter Mission without human assignment.", tone: "active", payload: {} },
-      { type: "mission.claimed", actorAgentId: "agt_maya", targetId: "msn_tests", summary: "Maya independently claimed the contract-test Mission.", tone: "active", payload: {} },
-      { type: "contribution.submitted", actorAgentId: "agt_tony", targetId: "msn_contract", summary: "Tony submitted commit 93ad2e1 with adapter implementation and passing unit tests.", tone: "info", payload: { commit: "93ad2e1" } },
-      { type: "contribution.submitted", actorAgentId: "agt_maya", targetId: "msn_tests", summary: "Maya submitted commit a21fc84 with three executable compatibility tests.", tone: "info", payload: { commit: "a21fc84" } },
-    ];
-  }
-
-  if (!snapshot.missions.some((mission) => mission.finding)) {
-    return [
-      { type: "review.finding", actorAgentId: "agt_charlie", targetId: "msn_contract", summary: "Charlie confirmed a Greptile finding: the empty-response path bypasses the adapter.", tone: "warning", payload: { finding: "Empty 204 responses bypass normalizeResponse() and return the nested transport envelope." } },
-      { type: "review.routed", actorAgentId: "agt_charlie", targetId: "agt_tony", summary: "Charlie routed the blocking interface finding to Tony with file and line evidence.", tone: "warning", payload: { missionId: "msn_contract" } },
-    ];
-  }
-
-  if (snapshot.missions.some((mission) => mission.status === "needs_work")) {
-    return [{
-      type: "contribution.repaired",
-      actorAgentId: "agt_tony",
-      targetId: "msn_contract",
-      summary: "Tony repaired the empty-response path in commit c70b6a9; the previously failing contract now passes.",
-      tone: "active",
-      payload: { commit: "c70b6a9" },
-    }];
-  }
-
-  if (snapshot.campaign.status !== "completed") {
-    return [
-      { type: "mission.accepted", actorAgentId: "agt_charlie", targetId: "msn_contract", summary: "Charlie accepted the repaired adapter after independent re-review.", tone: "success", payload: { verifier: "review" } },
-      { type: "mission.accepted", actorAgentId: "agt_charlie", targetId: "msn_tests", summary: "Charlie accepted Maya’s contract tests with all three failures reproduced before the fix.", tone: "success", payload: { verifier: "review" } },
-      { type: "mission.claimed", actorAgentId: "agt_daniel", targetId: "msn_integration", summary: "Daniel claimed the now-unblocked integration Mission.", tone: "active", payload: {} },
-      { type: "contribution.submitted", actorAgentId: "agt_daniel", targetId: "msn_integration", summary: "Daniel submitted the integrated adapter and contract suite in commit b18e490.", tone: "info", payload: { commit: "b18e490" } },
-      { type: "mission.accepted", actorAgentId: "agt_nina", targetId: "msn_integration", summary: "Nina independently ran the integration suite: 18 of 18 passed.", tone: "success", payload: { verifier: "npm test -- integration", exitCode: 0 } },
-      { type: "mission.claimed", actorAgentId: "agt_nina", targetId: "msn_release", summary: "Nina claimed the now-unblocked clean-checkout verification Mission.", tone: "active", payload: {} },
-      { type: "contribution.submitted", actorAgentId: "agt_nina", targetId: "msn_release", summary: "Nina submitted the clean-checkout verification record in commit e87cc21.", tone: "info", payload: { commit: "e87cc21" } },
-      { type: "mission.accepted", actorAgentId: "agt_charlie", targetId: "msn_release", summary: "Charlie independently confirmed Nina’s verifier passed every ratified victory condition.", tone: "success", payload: { verifier: "npm test && npm run build", exitCode: 0 } },
-      {
-        type: "campaign.completed",
-        actorAgentId: "agt_nina",
-        targetId: snapshot.campaign.id,
-        summary: "Code Republic completed the Campaign and issued evidence-backed contribution shares.",
-        tone: "success",
-        payload: {
-          shares: [
-            { agentId: "agt_tony", share: 28, basis: "Adapter implementation and routed repair" },
-            { agentId: "agt_maya", share: 22, basis: "Discovery evidence and contract tests" },
-            { agentId: "agt_sofia", share: 14, basis: "Selected architecture and dependency design" },
-            { agentId: "agt_charlie", share: 14, basis: "Confirmed finding and independent reviews" },
-            { agentId: "agt_daniel", share: 12, basis: "Integrated the accepted adapter and test Contributions" },
-            { agentId: "agt_nina", share: 10, basis: "Reproduction, integration evaluation, and clean-checkout verification" },
-          ],
-        },
-      },
-    ];
-  }
-
-  return [];
+  return nextDemoMissionDrafts(snapshot);
 }

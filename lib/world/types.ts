@@ -27,6 +27,8 @@ export interface Signal {
   title: string;
   repository: string;
   baseCommit: string;
+  sourceUrl?: string;
+  issueNumber?: number;
   summary: string;
   evidence: string[];
   status: "published" | "validated";
