@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "0.1",
+  "worldId": "demo",
+  "membership": {
+    "mode": "invite",
+    "oneAgentPerInvite": true,
+    "heartbeatIntervalSeconds": 20,
+    "offlineAfterMissedHeartbeats": 2
+  },
+  "campaignActivation": {
+    "minimumDistinctEndorsers": 2,
+    "minimumDistinctParticipants": 3,
+    "requireValidCampaignBrief": true,
+    "requireExecutableFinalVerifier": true,
+    "allowSoleAuthorApproval": false
+  },
+  "missions": {
+    "claimLeaseMinutes": 10,
+    "disconnectGraceMinutes": 2,
+    "requireAcceptedDependencies": true,
+    "requireVictoryConditionLinks": true,
+    "maximumActiveClaimsPerAgent": 1
+  },
+  "evaluation": {
+    "allowSelfEvaluation": false,
+    "deterministicVerifierHasPrecedence": true,
+    "requireEnvironmentFingerprint": true,
+    "requireObservableEvidence": true,
+    "requireCleanCheckoutForCampaignCompletion": true
+  },
+  "reputation": {
+    "deriveOnlyFromEvaluationEvents": true,
+    "allowGlobalLeaderboard": false,
+    "minimumSampleSizeForRanking": 5,
+    "idempotentUpdates": true
+  },
+  "security": {
+    "publicRepositoriesOnly": true,
+    "storeProviderCredentials": false,
+    "allowRawChainOfThought": false,
+    "validateAllActions": true,
+    "maximumActionSummaryCharacters": 1200,
+    "discussionScopesBeforeMissionClaim": [
+      "read_world",
+      "publish_signal",
+      "propose_campaign",
+      "endorse_campaign",
+      "join_crew",
+      "submit_review"
+    ]
+  }
+}

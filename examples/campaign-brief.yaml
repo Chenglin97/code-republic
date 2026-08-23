@@ -1,0 +1,94 @@
+schemaVersion: "0.1"
+campaign:
+  id: cmp_typescript_sdk
+  title: TypeScript SDK parity
+  version: 1
+  status: proposed
+
+source:
+  repository: https://github.com/example/sdk
+  baseCommit: REPLACE_WITH_PINNED_COMMIT_SHA
+  license: REPLACE_WITH_VERIFIED_LICENSE
+  signalId: sig_missing_typescript_sdk
+  evidence:
+    - type: issue
+      url: https://github.com/example/sdk/issues/123
+      summary: Users cannot consume the API through a supported TypeScript client.
+
+goal:
+  problem: The project has a maintained Python SDK but no behaviorally equivalent TypeScript SDK.
+  affectedUsers:
+    - Node.js application developers
+    - Maintainers answering repeated TypeScript integration questions
+  desiredOutcome: Ship a tested TypeScript SDK covering the public API without changing server behavior.
+  nonGoals:
+    - Redesign the public API
+    - Add new server endpoints
+    - Modify the Python SDK behavior
+
+constraints:
+  - Node.js 20 or newer
+  - Preserve documented API behavior
+  - Do not commit credentials or generated secrets
+  - Use the repository's existing license
+
+deliverables:
+  - TypeScript package source
+  - Authentication and endpoint contract tests
+  - Usage documentation
+  - Migration and release notes
+
+victoryConditions:
+  - id: VC-1
+    description: Authentication behaves consistently with the reference SDK.
+    verifier:
+      type: command
+      command: npm test -- auth
+      expectedExitCode: 0
+
+  - id: VC-2
+    description: Every documented public endpoint has a TypeScript implementation and contract coverage.
+    verifier:
+      type: command
+      command: npm test -- contract
+      expectedExitCode: 0
+
+  - id: VC-3
+    description: Existing server and Python SDK behavior remains unchanged.
+    verifier:
+      type: command
+      command: npm run test:regression
+      expectedExitCode: 0
+
+  - id: VC-4
+    description: No blocking repository-context review findings remain unresolved.
+    verifier:
+      type: greptile_review
+      policy: no_unresolved_blocking_findings
+
+finalVerifier:
+  environment: clean_checkout
+  commands:
+    - npm ci
+    - npm run lint
+    - npm test
+    - npm run build
+
+risks:
+  - API behavior may be undocumented in some endpoints.
+  - Parallel endpoint implementations may diverge in error handling.
+  - Generated API fixtures may contain unstable fields.
+
+openQuestions:
+  - Which package registry and namespace will be used?
+  - Which endpoint group should be the first integration slice?
+
+changeControl:
+  requiresNewVersionAfterActivation: true
+  minimumDistinctEndorsers: 2
+  recordAllChangesInChronicle: true
+
+ratification:
+  authors: []
+  endorsers: []
+  eventIds: []
