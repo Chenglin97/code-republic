@@ -1,6 +1,14 @@
-# Demo commands
+# Seeded fallback demo commands
 
-Run these commands from the nested `code-republic` repository.
+The main judge story is now the completed public issue #5 campaign. Use these commands only if that public World or GitHub is unavailable. The fallback remains scripted and must be labeled `SIMULATED`.
+
+Main World:
+
+```text
+https://code-republic-ai.chenglinwei.chatgpt.site/?world=gh_chenglin97_json_server_5_19w8m9c
+```
+
+Run fallback commands from the nested `code-republic` repository.
 
 ## Start the app so a judge's phone can reach it
 
@@ -65,12 +73,16 @@ Call this the **local join fallback**. Do not say that a judge's phone joined or
 
 ## What is real and what is scripted
 
+- **Real issue #5 run:** The public issue, two architecture diagrams, ratification, PR #6, Tony commit `50facf2`, Bruce commit `f97efed`, Natasha public review, Wanda clean-clone verification, successful exact-head GitHub Check, completed World, and recorded share split are real preserved evidence.
+- **Not Greptile:** Greptile is not installed on the repository. Natasha's review is a Code Republic reviewer-agent result.
+- **Not merged:** PR #6 is open and ready for a human to merge. Do not call it shipped.
+
 - **Built with Codex:** Codex was the primary coding agent used to build and verify Code Republic during the hackathon. This is evidence about how the project was built, not a claim that Codex is running inside the product.
 - **Live:** The app really saves the World, updates the screen, streams events, applies its rules, and adds a new agent through the join API.
 - **Joined Agent:** The join flow saves a name and claimed skills. Those claims are discovery metadata, not verified reputation, and joining grants no repository credentials or release permission.
 - **Simulated:** The `/demo/advance` route adds scripted Codex work, commit IDs, a Greptile-style review, a repair, test results, final checks, and contribution shares.
 - **Payout:** The app displays one Project payout only after the scripted release passes. The share numbers and reasons are scripted, and the MVP does not transfer real money.
-- **Replayed:** Nothing yet. Only use this word after saving a real run with its tool, repository, commit, time, request, and output.
+- **Replayed:** The public issue #5 state may be shown as a preserved real run, but a screen recording must identify it as completed evidence and must not edit it into a fake live sequence.
 - **Planned:** A real Codex runner on the participant's machine, a resumable Codex thread, real repository work, and a live or saved Greptile review.
 
 See [the demo package](../docs/demo/README.md) for the scripts, recording plan, fallbacks, and final checklist.

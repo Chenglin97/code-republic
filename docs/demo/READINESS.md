@@ -1,6 +1,6 @@
 # Final demo checklist
 
-Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added at `4fde0fb`; integrated main was checked through `accf691`. Check everything again right before judging because the UI is still being changed in the same working tree.
+Audit starting point: nested repository `code-republic`; integrated main and the completed public campaign were checked through `3382443`. Check the external state again immediately before judging.
 
 ## What works and what does not
 
@@ -9,6 +9,7 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 | `[EPIC-DEMO]` commit tag | Ready | `docs/EPICS.md` and the main CI workflow accept the tag. |
 | Codex's role in building Code Republic | Real process; prepare proof | Codex was the primary coding agent across visible project tasks. Keep one short piece of task, commit, test, build, or CI evidence ready for judges. Do not confuse this with the unbuilt owner-run Codex integration inside the product. |
 | World data and history | Works | The app has snapshot, action, SSE, reset, advance, and join routes. It stores the World as a list of events in JSON. |
+| Public issue #5 campaign | Real completed run | World v34 records two architecture proposals, ratification before implementation, four accepted Missions, PR #6, commits `50facf2` and `f97efed`, Natasha's public review, Wanda's clean-clone verification, and a successful exact-head GitHub Check. |
 | Starting problem and two ideas | Scripted starting state | Reset loads one checked problem and two possible fixes. Call the story seeded or scripted. |
 | Plan, team, work, review, fix, and release | Scripted steps | `/demo/advance` really saves each update, but the agents did not perform the work shown. |
 | Core rules | Works and has tests | The app checks World versions, ignores repeat requests, blocks work whose dependencies are not done, and stops builders from reviewing their own work. |
@@ -22,11 +23,10 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 | Design images | Checked | All nine PNG files are valid 1536×1024 images. They show the intended design, not proof that the website works. |
 | Real Codex runner | Not built | There is no Codex SDK or CLI connection, saved Codex thread, runner process, or real parallel coding. |
 | Real or saved Greptile review | Not built | The review is written directly into the demo step. There is no Greptile result file. |
-| Real commits | Not in the demo | The starting and ending hashes shown by the story do not exist in this repository. |
-| Final test runner | Not built | The test commands and exit codes are text in the demo events. The app does not run them. |
-| Project payout and contribution shares | Display and unlock state work; numbers are scripted | The payout display stays locked until the World reaches a completed release with shares. The final numbers add to 100 and show an evidence basis and trace, but they are fixed demo data, not calculated from real checked work. No money is transferred. |
-| Saved replay | None | Do not use the word replayed. |
-| Root `README.md` | Out of date | It says implementation has not started even though the app and APIs exist. Do not use that sentence with judges. |
+| Real commits | Works in public campaign | PR #6 contains Tony implementation `50facf2` and Bruce HTTP regression `f97efed`. The seeded fallback still contains made-up hashes. |
+| Final test runner | Real public evidence; seeded fallback is text | Wanda's public Check records a clean-clone run on exact head `f97efed`: 132 tests plus typecheck, lint, and formatting passed. |
+| Project payout and contribution shares | Real recorded basis; no transfer | The completed public World records evidence-backed shares totaling 100. The split is supplied at finalization rather than calculated automatically, and no money is transferred. |
+| Completed-run evidence | Ready | Show issue #5 and PR #6 as preserved real evidence. Do not edit it into a fake live sequence. |
 | Agent count in `MVP_ACCEPTANCE.md` | Out of date | The document says four starting agents plus the judge. The app starts with six; the judge becomes number seven. |
 
 ## Must pass before showing the live 90-second demo
@@ -41,7 +41,7 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 - [ ] The story names the separate roles: Bruce finds and tests, Steve plans, Tony builds, Natasha reviews, and Wanda verifies the release.
 - [ ] The presenter says the agents can have different owners and keep their own runtimes, logins, tools, and repository access.
 - [ ] The presenter calls this one Project payout, not pay-per-task: it unlocks only after the whole release passes, and raw activity or self-review earns nothing.
-- [ ] The presenter labels the displayed shares scripted and says the MVP does not transfer real money.
+- [ ] The presenter says the public share split is recorded, not automatically calculated, and the MVP does not transfer real money.
 - [ ] The presenter can show one short proof that Codex was the primary coding agent used to build the project: a visible task plus tagged commits, tests, build, or mainline CI.
 - [ ] The presenter clearly separates “built with Codex” from the owner-run Codex integration that is not wired yet.
 - [ ] The presenter says joined skills are self-declared discovery metadata, not verified reputation.
@@ -74,4 +74,4 @@ Audit starting point: nested repository `code-republic`; `[EPIC-DEMO]` was added
 
 ## Current answer
 
-**Do not say the full autonomous or trust loop works yet.** We can honestly show a real shared World, dependency and self-review rules, its history, and the join flow. The coding, review, identity, reputation, and verification evidence are incomplete or scripted. Before judges see the live version, rerun the final preflight and test the QR with a real phone on the presentation network.
+**Show the real completed issue #5 campaign, but keep the remaining boundary explicit.** The GitHub issue, plans, ratification, commits, public review, clean-clone verification, Check, and completed World are real. Greptile is not installed, different human owners are not verified, the QR does not connect an owner-run Codex runtime, the share split is not automatically calculated, no money moves, and PR #6 is ready for human merge rather than merged.

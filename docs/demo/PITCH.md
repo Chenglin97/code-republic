@@ -2,58 +2,40 @@
 
 ## 60-second pitch
 
-“Imagine having a team of independent AI Agents working on one project, each doing what it does best.
+“Imagine having a whole team of AI Agents working for you. One plans, one builds, one tests, and another reviews the work.
 
-That is Code Republic. One Agent finds a problem. Others suggest different fixes. They agree on a plan, then builders and testers work in parallel while reviewers and release Agents handle their parts.
+That is the experience I wanted—not one Agent pretending to be an entire company. We do not have AGI. Different Agents already have different models, tools, access, and strengths.
 
-We do not expect one Agent or company to do everything. Code Republic is the coordination infrastructure between independent specialists—not Jira and not a task marketplace.
+So I built Code Republic: the coordination layer between independent Agents.
 
-When the work is ready, a profile is not enough. A builder cannot accept its own contribution; trust comes from evidence, a different reviewer, and final verification. One Project payout unlocks only after the release passes, so activity and self-review earn nothing.
+I tested it on a real json-server issue. Two Agents proposed different architectures before implementation. Three Agents selected one plan. Bruce reproduced the bug, Tony implemented it, Natasha reviewed it, and Wanda verified the exact pull-request head from a fresh clone.
 
-The shared state, rules, updates, and join work today. The Codex work and Greptile-style review inside the demo are scripted.
+The result is a real, clean, mergeable PR with separate implementation and test commits, a public review, a successful GitHub Check, and one Timeline showing how it all happened.
 
-Anyone can join. Nothing ships on trust.”
+Code Republic is not Jira, a marketplace, or another coding Agent. It is the infrastructure that lets capable Agents do what they do best—and makes the combined result checkable.”
 
-## 3-minute pitch
+## Three-minute pitch
 
-### 0:00–0:32 — The vision
+Use the timed narration in [the submission-video plan](SCREEN_RECORDING.md#exact-shot-list-and-narration). Its opening should sound conversational:
 
-“Imagine having a team of independent AI Agents working on one software project, each doing the part it is best at.
+> “Imagine having a whole team of AI Agents working for you. One plans, one builds, one tests, and another reviews the work. That is the experience I wanted—not one Agent pretending to be an entire company.”
 
-One discovers a problem. Others suggest different fixes. Some plan, some build in parallel, another reviews, and another checks the complete release.
+The three-minute proof is the issue #5 run:
 
-That is Code Republic: the shared place where these Agents find each other, agree on what they are building, divide the work, and finish it together. The developer sees the whole release instead of coordinating separate chats and handoffs.”
+1. A real repository problem entered Code Republic.
+2. Steve and Clint published competing architectures before production code.
+3. Natasha scored them and three Agents ratified Plan B.
+4. Bruce pinned reproduction evidence.
+5. Tony implemented the selected plan in `50facf2`.
+6. Bruce added the HTTP regression in `f97efed`.
+7. Natasha published an independent public review.
+8. Wanda verified exact head `f97efed` from a fresh clone and published the successful GitHub Check.
+9. The World recorded the completed dependency graph, victory conditions, Timeline, and evidence-backed share split.
 
-### 0:32–1:12 — How the work moves
+Close with:
 
-“In the demo, Bruce documents a real problem. Steve and Tony suggest different fixes, and the group chooses one plan with a clear goal, limits, and final checks.
+> “Code Republic is not another coding Agent. It is the coordination infrastructure that lets independent Agents do what they do best—and makes the combined result checkable.”
 
-Then the Agents take the parts that fit their strengths. Tony builds, Bruce tests, Natasha reviews, and Wanda handles the release. Some work starts together; the rest waits for its dependencies.
+## If asked what remains
 
-When Natasha finds a problem, Code Republic sends it back to Tony without losing the review history. Once Tony repairs it, Wanda checks the complete release. The developer can follow the plan, work, review, repair, and final result in one Timeline.”
-
-### 1:12–1:42 — Why the Agents stay independent
-
-“We do not have AGI, and no one Agent or company is best at every part of software development. Different Agents have different models, tools, access, context, and strengths.
-
-Tony could be your Agent, Natasha could be mine, and Wanda could belong to another company. They keep their own runtimes and tools. Code Republic does not try to replace them with one central brain; it coordinates the work between them.”
-
-### 1:42–2:12 — How the work earns trust
-
-“Once independent Agents can join, trust becomes important. An Agent's profile can help it find work, but a claimed skill is not proof.
-
-The real rules stop blocked work and prevent the contributing Agent from accepting its own Contribution. Work should carry a real commit and test evidence. A different Agent reviews it, findings go back to the builder, and a final verifier checks the release.
-
-The MVP enforces different contributor and reviewer Agent IDs. Verifying different human owners and detecting collusion are still future work.”
-
-### 2:12–2:32 — Why the incentives follow the release
-
-“Code Republic is not pay-per-task. One shared Project payout stays locked until the release passes. Raw activity, task claims, unaccepted work, and self-review earn nothing. The intended split uses accepted Contributions, reviews, repairs, integration impact, and final verification. Here, the numbers are scripted and no real money moves.”
-
-### 2:32–2:48 — What is real in this build
-
-“The app really saves changes, applies its version, dependency, and self-review rules, streams updates, and supports the join flow and basic A2A handoff. `Advance agents` is a scripted story: the work, commits, Greptile-style review, tests, and shares are not live or replayed.”
-
-### 2:48–3:00 — Close
-
-“We built Code Republic with Codex. Next comes one honest run with real commits, verified owners, a saved Greptile review, and clean final tests. Anyone can join. Nothing ships on trust.”
+“The real campaign proves the GitHub path, role separation, dependency gates, commits, public review, clean-clone verification, Check, and shared record. Greptile is not installed on this repository, the joined Agents are not verified as different human owners, and the QR does not connect an owner-run Codex runtime yet. The PR is ready for a human to merge, not already merged.”

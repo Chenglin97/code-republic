@@ -1,12 +1,12 @@
 # Code Republic demo package
 
-Use these files to rehearse and present the hackathon demo.
+Use these files to record, rehearse, and present the hackathon demo. The main path is the completed public issue #5 campaign; the seeded `Advance agents` story is now a fallback.
 
 ## What to open
 
 - [90-second live demo](LIVE_DEMO_90S.md)
 - [60-second and 3-minute pitches](PITCH.md)
-- [Screen-recording plan](SCREEN_RECORDING.md)
+- [Three-minute submission-video plan](SCREEN_RECORDING.md)
 - [Fallbacks and judge questions](FALLBACKS_QA.md)
 - [Final readiness checklist](READINESS.md)
 - [Setup and reset commands](../../demo/README.md)
@@ -15,12 +15,13 @@ Use these files to rehearse and present the hackathon demo.
 
 | Label | What it means |
 | --- | --- |
-| **LIVE** | The running app or API is doing this now and saving the result. |
-| **SIMULATED** | The demo loads a scripted step. Codex, Greptile, or another outside tool did not perform the work. |
-| **REPLAYED** | This came from a real earlier run, and we saved enough information to prove where it came from. There is no such recording in the repository today. |
+| **LIVE** | The running app, GitHub integration, or API is doing this now and saving the result. |
+| **REAL RECORDED RUN** | Public issue #5, PR #6, its commits, review, clean-clone verification, GitHub Check, and completed World are preserved evidence from the real campaign. |
+| **SIMULATED** | The seeded demo loads a scripted step. Codex, Greptile, or another outside tool did not perform that seeded work. |
+| **REPLAYED** | Use only for a recording that shows a prior real run and clearly identifies its source. The public issue #5 evidence is real recorded state, but the submitted screen recording must not edit it into a fake live sequence. |
 | **PLANNED** | We designed it, but it is not working in the app yet. |
 
-Never call the demo's commit IDs, test results, Codex activity, or Greptile-style finding live or replayed. The commit IDs do not exist in this repository, and there is no saved Greptile result.
+Do not mix the two stories. The seeded `demo` World still contains made-up commit IDs, test text, and a scripted Greptile-style finding. The public issue #5 World instead points to real commit `50facf2`, reviewed head `f97efed`, PR #6, Natasha's public Code Republic review, and Wanda's successful exact-head Check. Greptile is not installed and must not be credited for either review.
 
 ## What Code Republic is
 
@@ -34,11 +35,11 @@ The incentive is one shared Project payout, not pay-per-task. It unlocks only af
 
 ## What works today
 
-> Today the shared state, dependency and self-review rules, live updates, website, join flow, and basic A2A handoff work. Join records claimed skills but does not verify them or connect a runtime. The Codex work and Greptile review shown in the demo are scripted placeholders for the real integrations.
+> Today a real GitHub issue can enter a public World, competing architectures can be published and ratified, dependency and self-review rules can gate Contributions, a real PR can carry role-separated commits and public review, and a clean-clone verifier can publish an exact-head GitHub Check. The app preserves the resulting Timeline and contribution split. The QR join still records claimed skills without verifying ownership or connecting a runtime. Greptile is not installed.
 
 ## How Codex fits
 
-> We built Code Republic with Codex as our primary coding agent. The visible Codex tasks helped build and verify the World, A2A bridge, UI, tests, and this demo package. That build process is separate from the owner-run Codex agents shown inside the product; that runtime connection is not wired yet.
+> We built Code Republic with Codex as our primary coding agent. Visible Codex tasks built and verified the World, GitHub path, A2A bridge, UI, tests, and demo package. The issue #5 campaign also preserves role-separated implementation, regression, review, and verification evidence. The QR still does not connect a participant's owner-run Codex runtime.
 
 ## Say the UI labels in plain English
 
