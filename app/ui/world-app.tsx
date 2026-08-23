@@ -11,9 +11,10 @@ import type {
   WorldEvent,
   WorldSnapshot,
 } from "@/lib/world/types";
+import type { A2ATraceRecord } from "@/lib/a2a/trace";
 
-type View = "world" | "signals" | "campaigns" | "missions" | "chronicle" | "agents";
-type StreamStatus = "connecting" | "live" | "reconnecting";
+type View = "world" | "signals" | "campaigns" | "missions" | "chronicle" | "agents" | "a2a";
+type StreamStatus = "connecting" | "live" | "reconnecting" | "snapshot";
 
 const githubInstallUrl = process.env.NEXT_PUBLIC_GITHUB_APP_INSTALL_URL ?? "https://github.com/apps/code-republic-ai/installations/new";
 
@@ -24,6 +25,7 @@ const navigation: Array<{ id: View; label: string; glyph: string }> = [
   { id: "missions", label: "Missions", glyph: "◇" },
   { id: "chronicle", label: "Timeline", glyph: "≡" },
   { id: "agents", label: "Agents", glyph: "◌" },
+  { id: "a2a", label: "A2A Logs", glyph: "⇄" },
 ];
 
 const viewTitles: Record<View, { eyebrow: string; title: string; description: string }> = {
@@ -56,6 +58,11 @@ const viewTitles: Record<View, { eyebrow: string; title: string; description: st
     eyebrow: "Independent agents",
     title: "Agent Network",
     description: "Capability-specific reputation replaces one opaque score or central assignment queue.",
+  },
+  a2a: {
+    eyebrow: "Protocol observability",
+    title: "A2A Trace Console",
+    description: "Inspect normalized A2A envelopes, independently owned runtimes, latency, status, and reported token usage.",
   },
 };
 
@@ -636,6 +643,91 @@ function ChronicleView({ snapshot }: { snapshot: WorldSnapshot }) {
   );
 }
 
+function traceTokenTotal(trace: A2ATraceRecord): number | null {
+  if (trace.usage.totalTokens !== undefined) return trace.usage.totalTokens;
+  if (trace.usage.inputTokens !== undefined || trace.usage.outputTokens !== undefined) {
+    return (trace.usage.inputTokens ?? 0) + (trace.usage.outputTokens ?? 0);
+  }
+  return null;
+}
+
+function TraceMetric({ label, value, note }: { label: string; value: string; note: string }) {
+  return <div className="trace-metric"><span>{label}</span><strong>{value}</strong><small>{note}</small></div>;
+}
+
+function A2ATracesView({ worldId }: { worldId: string }) {
+  const [traces, setTraces] = useState<A2ATraceRecord[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [agentFilter, setAgentFilter] = useState("all");
+  const [status, setStatus] = useState<"loading" | "live" | "error">("loading");
+
+  const loadTraces = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/a2a/traces?worldId=${encodeURIComponent(worldId)}&limit=200`, { cache: "no-store" });
+      if (!response.ok) throw new Error("Trace endpoint unavailable");
+      const result = await response.json() as { traces: A2ATraceRecord[] };
+      setTraces(result.traces);
+      setSelectedId((current) => current && result.traces.some((trace) => trace.traceId === current) ? current : result.traces[0]?.traceId ?? null);
+      setStatus("live");
+    } catch {
+      setStatus("error");
+    }
+  }, [worldId]);
+
+  useEffect(() => {
+    void loadTraces();
+    const timer = window.setInterval(() => { void loadTraces(); }, 5000);
+    return () => window.clearInterval(timer);
+  }, [loadTraces]);
+
+  const agentNames = Array.from(new Set(traces.map((trace) => trace.source.agentName))).sort();
+  const filtered = agentFilter === "all" ? traces : traces.filter((trace) => trace.source.agentName === agentFilter);
+  const selected = filtered.find((trace) => trace.traceId === selectedId) ?? filtered[0];
+  const reported = traces.filter((trace) => trace.usage.source !== "not-reported");
+  const reportedTokens = reported.reduce((total, trace) => total + (traceTokenTotal(trace) ?? 0), 0);
+  const rejected = traces.filter((trace) => trace.status !== "succeeded").length;
+
+  return (
+    <div className="trace-console">
+      <section className="trace-summary" aria-label="A2A trace summary">
+        <TraceMetric label="Captured envelopes" value={String(traces.length)} note={`World ${worldId}`} />
+        <TraceMetric label="Independent callers" value={String(agentNames.length)} note="Agent Card identities" />
+        <TraceMetric label="Reported tokens" value={reported.length ? reportedTokens.toLocaleString() : "—"} note={reported.length ? `${reported.length} trace${reported.length === 1 ? "" : "s"} reported usage` : "No adapter report yet"} />
+        <TraceMetric label="Rejected" value={String(rejected)} note="Protocol or version errors" />
+      </section>
+
+      <div className="trace-workspace">
+        <Panel
+          className="trace-index"
+          eyebrow="Inbound and outbound envelopes"
+          title="Raw A2A activity"
+          action={<div className="trace-actions"><span className={cx("trace-live", `trace-live-${status}`)}><i />{status}</span><select aria-label="Filter traces by agent" value={agentFilter} onChange={(event) => { setAgentFilter(event.target.value); setSelectedId(null); }}><option value="all">All agents</option>{agentNames.map((name) => <option value={name} key={name}>{name}</option>)}</select><button className="secondary-button small-button" onClick={() => void loadTraces()}>Refresh</button></div>}
+        >
+          <div className="trace-table" role="list">
+            <div className="trace-table-head"><span>Time / trace</span><span>Agent / runtime</span><span>Method</span><span>Latency</span><span>Tokens</span><span>Status</span></div>
+            {filtered.map((trace) => {
+              const tokenTotal = traceTokenTotal(trace);
+              return <button className={cx("trace-row", selected?.traceId === trace.traceId && "trace-row-selected")} onClick={() => setSelectedId(trace.traceId)} key={trace.traceId} role="listitem"><span><time dateTime={trace.timestamp}>{new Date(trace.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</time><code>{trace.traceId.slice(0, 12)}</code></span><span><strong>{trace.source.agentName}</strong><small>{trace.source.agentType}{trace.source.model ? ` · ${trace.source.model}` : ""}</small></span><code>{trace.method}</code><span>{trace.durationMs.toFixed(2)} ms</span><span>{tokenTotal === null ? "not reported" : tokenTotal.toLocaleString()}<small>{trace.usage.source.replace("-", " ")}</small></span><StatusPill label={trace.status} tone={trace.status === "succeeded" ? "success" : "warning"} /></button>;
+            })}
+            {status !== "loading" && filtered.length === 0 && <div className="trace-empty"><span>⇄</span><h3>No A2A envelopes captured for this filter</h3><p>Send a JSON-RPC request to <code>/a2a</code>. The trace will appear here without storing arbitrary message content.</p></div>}
+          </div>
+        </Panel>
+
+        <aside className="trace-detail">
+          {selected ? <>
+            <div className="trace-detail-head"><div><span className="eyebrow">Selected trace</span><h2>{selected.source.agentName}</h2><p>{selected.source.ownership} · {selected.source.provider ?? "provider unverified"}</p></div><StatusPill label={`A2A ${selected.protocolVersion}`} tone="active" /></div>
+            <div className="trace-detail-grid"><div><span>Trace ID</span><code>{selected.traceId}</code></div><div><span>Message</span><code>{selected.source.messageId ?? "not supplied"}</code></div><div><span>Context</span><code>{selected.source.contextId ?? "not supplied"}</code></div><div><span>Adapter</span><code>{selected.destination.adapterId}</code></div></div>
+            <div className="trace-usage"><span className="eyebrow">Token telemetry</span><div><span><small>Input</small><strong>{selected.usage.inputTokens?.toLocaleString() ?? "—"}</strong></span><span><small>Cached</small><strong>{selected.usage.cachedInputTokens?.toLocaleString() ?? "—"}</strong></span><span><small>Output</small><strong>{selected.usage.outputTokens?.toLocaleString() ?? "—"}</strong></span><span><small>Total</small><strong>{traceTokenTotal(selected)?.toLocaleString() ?? "—"}</strong></span></div><p>Source: <strong>{selected.usage.source.replace("-", " ")}</strong>. Counts are never inferred from payload size.</p></div>
+            <div className="trace-json-block"><div><span>REQUEST · {selected.requestBytes.toLocaleString()} bytes</span><code>normalized envelope</code></div><pre>{JSON.stringify(selected.envelope.request, null, 2)}</pre></div>
+            <div className="trace-json-block"><div><span>RESPONSE · {selected.responseBytes.toLocaleString()} bytes</span><code>{selected.status}</code></div><pre>{JSON.stringify(selected.envelope.response, null, 2)}</pre></div>
+            <p className="trace-privacy-note">Arbitrary text, data-part bodies, credentials, and headers are excluded. This is a protocol trace, not a prompt transcript.</p>
+          </> : <div className="trace-detail-empty"><span>⇄</span><p>Select a trace to inspect its normalized JSON-RPC envelope and telemetry provenance.</p></div>}
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 function AgentsView({ snapshot, onJoin }: { snapshot: WorldSnapshot; onJoin: () => void }) {
   const [selectedId, setSelectedId] = useState<string | null>(snapshot.agents[0]?.id ?? null);
   useEffect(() => { if (!selectedId && snapshot.agents[0]) setSelectedId(snapshot.agents[0].id); }, [selectedId, snapshot.agents]);
@@ -741,19 +833,31 @@ export function WorldApp({ initialView = "world", joinOnLoad = false, worldId = 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<"advance" | "reset" | null>(null);
   const [streamStatus, setStreamStatus] = useState<StreamStatus>("connecting");
+  const [fallbackMode, setFallbackMode] = useState(false);
   const [notice, setNotice] = useState("");
   const [joinOpen, setJoinOpen] = useState(joinOnLoad);
   const versionRef = useRef(0);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadSnapshot = useCallback(async () => {
-    const response = await fetch(`${apiRoot}/snapshot`, { cache: "no-store" });
-    if (!response.ok) throw new Error("World snapshot is unavailable.");
-    const next = await response.json() as WorldSnapshot;
+    let next: WorldSnapshot;
+    try {
+      const response = await fetch(`${apiRoot}/snapshot`, { cache: "no-store" });
+      if (!response.ok) throw new Error("World snapshot is unavailable.");
+      next = await response.json() as WorldSnapshot;
+      setFallbackMode(false);
+    } catch (liveError) {
+      const fallback = await fetch(`/worlds/${encodeURIComponent(worldId)}.json`, { cache: "no-store" });
+      if (!fallback.ok) throw liveError;
+      next = await fallback.json() as WorldSnapshot;
+      setFallbackMode(true);
+      setStreamStatus("snapshot");
+      setNotice("Showing the last verified World snapshot. Live updates are temporarily unavailable.");
+    }
     versionRef.current = next.world.version;
     setSnapshot(next);
     return next;
-  }, [apiRoot]);
+  }, [apiRoot, worldId]);
 
   useEffect(() => {
     let active = true;
@@ -762,6 +866,10 @@ export function WorldApp({ initialView = "world", joinOnLoad = false, worldId = 
   }, [loadSnapshot]);
 
   useEffect(() => {
+    if (fallbackMode) {
+      setStreamStatus("snapshot");
+      return;
+    }
     const source = new EventSource(`${apiRoot}/events?after=${versionRef.current}`);
     source.onopen = () => setStreamStatus("live");
     source.onerror = () => setStreamStatus("reconnecting");
@@ -772,7 +880,7 @@ export function WorldApp({ initialView = "world", joinOnLoad = false, worldId = 
       refreshTimerRef.current = setTimeout(() => { loadSnapshot().catch(() => setStreamStatus("reconnecting")); }, 90);
     });
     return () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); source.close(); };
-  }, [loadSnapshot]);
+  }, [apiRoot, fallbackMode, loadSnapshot]);
 
   const runDemoAction = useCallback(async (action: "advance" | "reset") => {
     setBusy(action);
@@ -800,8 +908,9 @@ export function WorldApp({ initialView = "world", joinOnLoad = false, worldId = 
     if (view === "campaigns") return <CampaignsView snapshot={snapshot} />;
     if (view === "missions") return <MissionsView snapshot={snapshot} />;
     if (view === "chronicle") return <ChronicleView snapshot={snapshot} />;
+    if (view === "a2a") return <A2ATracesView worldId={worldId} />;
     return <AgentsView snapshot={snapshot} onJoin={() => setJoinOpen(true)} />;
-  }, [busy, runDemoAction, simulationEnabled, snapshot, view]);
+  }, [busy, runDemoAction, simulationEnabled, snapshot, view, worldId]);
 
   return (
     <div className="app-shell">

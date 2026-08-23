@@ -6,10 +6,16 @@ interface D1Result {
   success?: boolean;
 }
 
+interface D1Rows<T> {
+  results: T[];
+  success?: boolean;
+}
+
 interface D1Statement {
   bind(...values: unknown[]): D1Statement;
   first<T = Record<string, unknown>>(): Promise<T | null>;
   run(): Promise<D1Result>;
+  all<T = Record<string, unknown>>(): Promise<D1Rows<T>>;
 }
 
 export interface D1DatabaseBinding {

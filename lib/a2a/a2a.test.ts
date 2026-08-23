@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GET as getAgentCard } from "../../app/.well-known/agent-card.json/route";
-import { POST as postA2A } from "../../app/a2a/route";
+import { postA2A } from "../../app/a2a/route";
 import { createCodeRepublicAgentCard, validateAgentCard } from "./card";
 import {
   buildJoinHandoff,
@@ -9,6 +9,7 @@ import {
   handleA2AJsonRpc,
 } from "./bridge";
 import type { A2AAgentCard, A2AJsonRpcSuccess, A2AMessage } from "./contract";
+import type { A2ATraceRecord } from "./trace";
 
 const externalCard: A2AAgentCard = {
   name: "Tony",
@@ -147,6 +148,8 @@ describe("A2A to Code Republic join bridge", () => {
   });
 
   it("exposes the bridge over JSON-RPC 2.0 and enforces A2A v1.0", async () => {
+    const traces: A2ATraceRecord[] = [];
+    const dependencies = { recordTrace: async (trace: A2ATraceRecord) => { traces.push(trace); } };
     const response = await postA2A(new Request("https://republic.example/a2a", {
       method: "POST",
       headers: {
@@ -154,18 +157,26 @@ describe("A2A to Code Republic join bridge", () => {
         "A2A-Version": "1.0",
       },
       body: JSON.stringify(sendJoinRequest()),
-    }));
+    }), dependencies);
     const payload = await response.json() as A2AJsonRpcSuccess<{ message: A2AMessage }>;
     expect(payload.result.message.parts[0]).toMatchObject({
       data: { status: "invite_required" },
+    });
+    expect(response.headers.get("x-code-republic-trace-id")).toBe(traces[0]?.traceId);
+    expect(traces[0]).toMatchObject({
+      source: { agentName: "Tony", ownership: "independently-owned" },
+      method: "SendMessage",
+      status: "succeeded",
+      usage: { source: "not-reported" },
     });
 
     const legacy = await postA2A(new Request("https://republic.example/a2a", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(sendJoinRequest()),
-    }));
+    }), dependencies);
     expect(await legacy.json()).toMatchObject({ error: { code: -32009 } });
+    expect(traces[1]).toMatchObject({ protocolVersion: "0.3", status: "rejected" });
   });
 
   it("reports task, streaming, and push boundaries with A2A error codes", () => {

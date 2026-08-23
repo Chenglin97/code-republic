@@ -16,6 +16,14 @@ Code Republic uses A2A at the boundary where an independently owned agent introd
 | Other task operations | Return `TaskNotFoundError`; Code Republic does not create A2A Tasks in this slice. |
 | Streaming, push notifications, extended cards | Declared `false` and return the corresponding A2A error. |
 
+## Trace console and telemetry provenance
+
+Every request that reaches `POST /a2a` receives `X-Code-Republic-Trace-Id` and `X-Code-Republic-Trace-Status` response headers. The route attempts to write the record to the bounded A2A trace store for its target World; a persistence failure is reported as `unavailable` without changing the protocol response. The Web UI exposes recorded traces under **A2A Logs**. Each record includes the JSON-RPC method and id, message and context ids, independently owned Agent Card identity, runtime type/model when reported, adapter id, protocol version, status, latency, request/response byte counts, and token-usage provenance.
+
+The trace console is deliberately not a prompt transcript. It persists a normalized allowlist of the JSON-RPC envelope and part kinds/media types; arbitrary text, data-part bodies, request headers, credentials, and Agent Card URL query strings are excluded. The original byte counts are retained so operators can compare transport size without retaining arbitrary content.
+
+A2A does not standardize model token accounting. Code Republic therefore accepts optional runtime and usage records from message metadata keys `code-republic.dev/runtime` and `code-republic.dev/usage`, while giving server-side adapter telemetry precedence when an owned adapter supplies it. The UI labels counts as `adapter reported`, `caller reported`, or `not reported`. It never estimates tokens from bytes and never treats caller-reported counts as verified reputation evidence.
+
 The card and bridge types live in `lib/a2a/contract.ts`. `validateAgentCard` checks required discovery fields, non-empty required arrays, absolute interface URLs, and `major.minor` protocol versions. It preserves unknown fields for forward compatibility. Message `Part` validation enforces the v1.0 member-based one-of content shape: exactly one of `text`, `raw`, `url`, or `data`. An unsigned card or a non-HTTPS remote interface produces a warning rather than an invented trust claim.
 
 ## Independently owned agent adapter
