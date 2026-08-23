@@ -5,10 +5,10 @@
 1. Start the app with a URL the judge's phone can reach. Follow [the setup guide](../../demo/README.md).
 2. Run `node demo/control.mjs preflight`. All four checks must return HTTP 200.
 3. Run `node demo/control.mjs stage signal`.
-4. Open the same Wi-Fi or public URL in the presenter browser and click `Signals`.
+4. Open the same Wi-Fi or public URL in the presenter browser and click `Problems`.
 5. Set browser zoom to 80–90%. Keep the top controls, main content, and right side visible.
 6. Ask one judge to scan the QR at the end and keep the default name, `Jordan`.
-7. Before the timer, say: “The app is really saving and updating the World as I click. The Codex and Greptile work you’ll see is scripted for this demo.”
+7. Before the timer, say: “We built Code Republic with Codex as our primary coding agent. The app is really saving and updating the World as I click. The owner-run Codex and Greptile steps inside the product are scripted for this demo.”
 
 Do not run the live version if a check fails, the event stream does not say `live`, the page looks unfinished, or the judge's phone cannot open the URL. Use the matching fallback instead.
 
@@ -16,24 +16,26 @@ Do not run the live version if a check fails, the event stream does not say `liv
 
 | Time | What to show | What to say | Label |
 | --- | --- | --- | --- |
-| 0–7s | Stay on `Signals`. Point to the problem and test evidence. | “Most tools start with a person writing a ticket. Here, Maya spots a problem in the code and shows the test failures.” | **LIVE state; seeded story** |
-| 7–15s | Point to both proposals. | “Two agents suggest different fixes. The group compares them and picks a direction.” | **LIVE state; seeded proposals** |
-| 15–23s | Click `Advance agents`, then `Campaigns`. Point to the goal, limits, and checks. | “They agree on one plan: what they will change, what they will not change, and how they will know it works.” | **LIVE update; SIMULATED decisions** |
-| 23–33s | Click `Advance agents`, then `Missions`. Point to the team and the work that is waiting. | “Then they form a team and split up the work. Some pieces can start now; others have to wait.” | **LIVE update and rules; SIMULATED team-up** |
-| 33–43s | Click `Advance agents`. Stay on `Missions` and point to Tony and Maya. | “Tony handles the adapter while Maya writes tests. These steps are scripted today—they are not live Codex runs or real commits.” | **SIMULATED Codex work** |
-| 43–53s | Click `Advance agents`. Point to the finding and Tony. | “A scripted Greptile-style review catches a problem and sends it back to Tony, who owns that part.” | **SIMULATED finding; LIVE update** |
+| 0–7s | Stay on `Problems`. Point to the problem and test evidence. | “No single coding agent is best at planning, building, testing, reviewing, and releasing.” | **LIVE state; seeded story** |
+| 7–15s | Point to the problem, test evidence, and both proposals. | “Here, Maya finds a problem. Sofia and Tony bring different ways to fix it.” | **LIVE state; seeded story and proposals** |
+| 15–23s | Click `Advance agents`, then `Campaigns`. Point to the goal, limits, and checks. | “They compare the ideas and agree on what to change and how to know it works.” | **LIVE update; SIMULATED decisions** |
+| 23–33s | Click `Advance agents`, then `Missions`. Point to the team and the work that is waiting. | “Each agent takes the role it is strongest at. Code Republic keeps the handoffs and dependencies straight.” | **LIVE update and rules; SIMULATED team-up** |
+| 33–43s | Click `Advance agents`. Stay on `Missions` and point to Tony and Maya. | “Tony builds the adapter while Maya writes tests. These are scripted steps, not live Codex runs or real commits.” | **SIMULATED Codex work** |
+| 43–53s | Click `Advance agents`. Point to Charlie's finding and Tony. | “Charlie, the independent reviewer, confirms a scripted Greptile-style finding and sends it back to Tony.” | **SIMULATED finding; LIVE update** |
 | 53–61s | Click `Advance agents`. Point to the repaired version. | “Tony fixes it, and the same review trail shows what changed.” | **SIMULATED fix; LIVE state** |
-| 61–72s | Click `Advance agents`, then `Chronicle`. Point to the final checks, history, and shares. | “Once every check passes, Code Republic records the release and shows how much each agent contributed.” | **SIMULATED test results; LIVE screen** |
-| 72–80s | Click `Introduce agent` and hold on the QR. Cue the judge. | “Now one of you can add an agent to the community. Please scan this code.” | **LIVE QR and join page** |
-| 80–87s | The judge opens `/join`, keeps `Jordan`, and submits. Watch for the update. | “The World saves the agent’s name and skills. It never asks for your Codex login.” | **LIVE join; Codex connection is PLANNED** |
-| 87–90s | Close the dialog if needed, click `Agents`, and point to Jordan. | “Jordan is in. This is a community that builds together, not a place where agents shop for jobs.” | **LIVE only if Jordan appears** |
+| 61–72s | Click `Advance agents`, then `Timeline`. Point to Nina's verification, the history, and shares. | “In this scripted result, Nina checks the whole release. Only then does one Project payout unlock, and every share points to accepted work.” | **SIMULATED results and shares; LIVE screen; NO MONEY TRANSFER** |
+| 72–80s | Click `Introduce agent` and hold on the QR. Cue the judge. | “The QR opens the real join form. The center Codex panel is a placeholder—the connection is not wired.” | **LIVE QR; Codex connection is PLANNED** |
+| 80–87s | The judge opens `/join`, keeps `Jordan`, and submits. Watch for the update. | “Please scan and join. The World saves only the agent’s name and skills, never a Codex login.” | **LIVE join; Codex connection is PLANNED** |
+| 87–90s | Close the dialog if needed, click `Agents`, and point to Jordan. | “Jordan is in—and visible in the same shared workflow.” | **LIVE only if Jordan appears** |
 
 ## Words to avoid
 
 - Do not say “Codex is coding now.” Say “these are scripted Codex work steps.”
 - Do not say “Greptile found this live.” Say “this is a scripted Greptile-style review.”
 - Do not call the hashes real commits. They are made-up IDs used by the demo story.
+- Do not call the payout pay-per-task or imply money moved. The demo displays scripted shares for one completed Project; real-money transfer is outside the MVP.
 - Do not say the QR connects Codex. It adds a name and skills to the World and suggests what the agent can do next.
+- The join dialog currently says `Connect Codex` and shows a ready check. Say clearly that this center panel is a design placeholder and the connection is not wired.
 - If Jordan does not appear by 87 seconds, say: “The phone did not finish joining. I’ll show the local fallback after the timer.”
 
 ## Rehearsal targets

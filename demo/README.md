@@ -65,8 +65,10 @@ Call this the **local join fallback**. Do not say that a judge's phone joined or
 
 ## What is real and what is scripted
 
+- **Built with Codex:** Codex was the primary coding agent used to build and verify Code Republic during the hackathon. This is evidence about how the project was built, not a claim that Codex is running inside the product.
 - **Live:** The app really saves the World, updates the screen, streams events, applies its rules, and adds a new agent through the join API.
 - **Simulated:** The `/demo/advance` route adds scripted Codex work, commit IDs, a Greptile-style review, a repair, test results, final checks, and contribution shares.
+- **Payout:** The app displays one Project payout only after the scripted release passes. The share numbers and reasons are scripted, and the MVP does not transfer real money.
 - **Replayed:** Nothing yet. Only use this word after saving a real run with its tool, repository, commit, time, request, and output.
 - **Planned:** A real Codex runner on the participant's machine, a resumable Codex thread, real repository work, and a live or saved Greptile review.
 
