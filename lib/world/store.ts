@@ -25,6 +25,10 @@ export function submitAction(worldId: string, input: unknown): Promise<ActionRes
   return authority.submitAction(worldId, input);
 }
 
+export function heartbeatAgent(worldId: string, agentId: string, input: unknown): Promise<ActionResult> {
+  return authority.heartbeatAgent(worldId, agentId, input);
+}
+
 export function resetWorld(worldId: string): Promise<WorldSnapshot> {
   return authority.resetWorld(worldId);
 }

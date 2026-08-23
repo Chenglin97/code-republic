@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { WorldRuleError } from "@/lib/world/actions";
+import { WorldRuleError } from "../../../lib/world/actions";
 
 export type WorldRouteContext = { params: Promise<{ worldId: string }> };
+export type WorldAgentRouteContext = { params: Promise<{ worldId: string; agentId: string }> };
 
 export async function getWorldId(context: WorldRouteContext): Promise<string> {
   return (await context.params).worldId;
+}
+
+export async function getWorldAgentIds(context: WorldAgentRouteContext): Promise<{ worldId: string; agentId: string }> {
+  return context.params;
 }
 
 export async function readJson(request: Request): Promise<unknown> {

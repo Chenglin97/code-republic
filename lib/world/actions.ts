@@ -1,17 +1,9 @@
 import { z } from "zod";
+import { WorldRuleError } from "./errors";
+import { missionLeaseSeconds } from "./heartbeat";
 import type { Campaign, EventDraft, Mission, WorldAction, WorldSnapshot } from "./types";
 
-export class WorldRuleError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-    public readonly status = 400,
-    public readonly details: Record<string, unknown> = {},
-  ) {
-    super(message);
-    this.name = "WorldRuleError";
-  }
-}
+export { WorldRuleError };
 
 export const worldActionSchema = z.object({
   type: z.enum(["agent.introduce", "campaign.endorse", "crew.join", "mission.claim", "review.submit", "evaluation.submit"]),
@@ -103,7 +95,7 @@ export function decideAction(snapshot: WorldSnapshot, action: WorldAction): Even
         targetId: action.targetId,
         summary: action.summary,
         tone: "active",
-        payload: action.payload ?? {},
+        payload: { ...action.payload, leaseSeconds: missionLeaseSeconds(action.payload) },
         idempotencyKey: action.idempotencyKey,
       }];
     }

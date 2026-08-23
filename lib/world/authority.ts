@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { decideAction, WorldRuleError, worldActionSchema } from "./actions";
+import { decideHeartbeat, expiredLeaseDrafts, heartbeatSchema, type HeartbeatInput } from "./heartbeat";
 import { StorageVersionConflict, type WorldEventStorage } from "./persistence";
 import { projectWorld } from "./reducer";
 import { createSeedEvents } from "./seed";
@@ -48,6 +49,7 @@ export class WorldAuthority {
       if (worldId !== DEMO_WORLD_ID) return [];
       return createSeedEvents();
     },
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   assertSupportedWorld(worldId: string): void {
@@ -57,16 +59,16 @@ export class WorldAuthority {
   }
 
   async getSnapshot(worldId: string): Promise<WorldSnapshot> {
-    return this.serialize(worldId, async () => projectWorld(await this.readOrSeed(worldId)));
+    return this.serialize(worldId, async () => projectWorld(await this.readCurrent(worldId)));
   }
 
   async getEventsAfter(worldId: string, version: number): Promise<WorldEvent[]> {
-    return this.serialize(worldId, async () => (await this.readOrSeed(worldId)).filter((event) => event.version > version));
+    return this.serialize(worldId, async () => (await this.readCurrent(worldId)).filter((event) => event.version > version));
   }
 
   async appendDrafts(worldId: string, drafts: EventDraft[], options: AppendOptions = {}): Promise<ActionResult> {
     return this.serialize(worldId, async () => {
-      const events = await this.readOrSeed(worldId);
+      const events = await this.readCurrent(worldId);
       const requestFingerprint = options.idempotencyKey
         ? fingerprint(options.idempotencyInput ?? drafts)
         : undefined;
@@ -93,7 +95,7 @@ export class WorldAuthority {
     const requestFingerprint = fingerprint(action);
 
     return this.serialize(worldId, async () => {
-      const events = await this.readOrSeed(worldId);
+      const events = await this.readCurrent(worldId);
       const duplicate = this.findDuplicate(events, action.idempotencyKey, requestFingerprint);
       if (duplicate) return actionResult(events, duplicate, true);
 
@@ -106,6 +108,36 @@ export class WorldAuthority {
         events,
         decideAction(snapshot, action),
         action.idempotencyKey,
+        requestFingerprint,
+      );
+      await this.append(worldId, snapshot.world.version, materialized);
+      const nextEvents = [...events, ...materialized];
+      return actionResult(nextEvents, materialized, false);
+    });
+  }
+
+  async heartbeatAgent(worldId: string, agentId: string, input: unknown): Promise<ActionResult> {
+    const parsed = heartbeatSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new WorldRuleError("INVALID_HEARTBEAT", parsed.error.issues[0]?.message ?? "Invalid heartbeat.");
+    }
+    const heartbeat = parsed.data as HeartbeatInput;
+    const requestFingerprint = fingerprint({ agentId, heartbeat });
+
+    return this.serialize(worldId, async () => {
+      const events = await this.readCurrent(worldId);
+      const duplicate = this.findDuplicate(events, heartbeat.idempotencyKey, requestFingerprint);
+      if (duplicate) return actionResult(events, duplicate, true);
+
+      const snapshot = projectWorld(events);
+      if (snapshot.world.version !== heartbeat.expectedWorldVersion) {
+        throw this.versionConflict(heartbeat.expectedWorldVersion, snapshot.world.version);
+      }
+      const materialized = this.materializeDrafts(
+        worldId,
+        events,
+        decideHeartbeat(snapshot, agentId, heartbeat),
+        heartbeat.idempotencyKey,
         requestFingerprint,
       );
       await this.append(worldId, snapshot.world.version, materialized);
@@ -132,6 +164,16 @@ export class WorldAuthority {
     return events;
   }
 
+  private async readCurrent(worldId: string): Promise<WorldEvent[]> {
+    const events = await this.readOrSeed(worldId);
+    const drafts = expiredLeaseDrafts(projectWorld(events), this.now());
+    if (drafts.length === 0) return events;
+
+    const materialized = this.materializeDrafts(worldId, events, drafts);
+    await this.append(worldId, events.at(-1)?.version ?? 0, materialized);
+    return [...events, ...materialized];
+  }
+
   private findDuplicate(events: WorldEvent[], idempotencyKey?: string, requestFingerprint?: string): WorldEvent[] | null {
     if (!idempotencyKey) return null;
     const existing = events.filter((event) => event.idempotencyKey === idempotencyKey);
@@ -155,7 +197,7 @@ export class WorldAuthority {
     idempotencyFingerprint?: string,
   ): WorldEvent[] {
     const baseVersion = events.at(-1)?.version ?? 0;
-    const timestamp = Date.now();
+    const timestamp = this.now().getTime();
     return drafts.map((draft, index) => ({
       ...draft,
       id: `evt_${String(baseVersion + index + 1).padStart(3, "0")}`,

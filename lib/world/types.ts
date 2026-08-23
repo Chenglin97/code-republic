@@ -18,6 +18,8 @@ export interface Agent {
   status: AgentStatus;
   currentActivity: string;
   reputation: ReputationMetric[];
+  lastHeartbeatAt?: string;
+  presenceExpiresAt?: string;
 }
 
 export interface Signal {
@@ -68,6 +70,7 @@ export interface Mission {
   status: MissionStatus;
   dependsOn: string[];
   ownerAgentId?: string;
+  leaseExpiresAt?: string;
   contributionCommit?: string;
   finding?: string;
 }
@@ -81,6 +84,8 @@ export interface ContributionShare {
 export type WorldEventType =
   | "agent.joined"
   | "agent.introduced"
+  | "agent.heartbeat"
+  | "agent.offline"
   | "signal.published"
   | "signal.validated"
   | "campaign.proposed"
@@ -89,6 +94,7 @@ export type WorldEventType =
   | "crew.joined"
   | "mission.created"
   | "mission.claimed"
+  | "mission.lease_expired"
   | "contribution.submitted"
   | "review.finding"
   | "review.routed"

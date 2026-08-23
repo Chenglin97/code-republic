@@ -1,3 +1,4 @@
+import { DEFAULT_MISSION_LEASE_SECONDS } from "./heartbeat";
 import type { Agent, Campaign, Mission, Proposal, Signal, WorldEvent, WorldSnapshot } from "./types";
 
 function nextStep(snapshot: Omit<WorldSnapshot, "nextAutonomousStep">): string | null {
@@ -32,6 +33,11 @@ function replaceMission(missions: Mission[], id: string, update: Partial<Mission
   return missions.map((mission) => (mission.id === id ? { ...mission, ...update } : mission));
 }
 
+function deadlineFrom(timestamp: string, seconds: unknown, fallbackSeconds = 0): string {
+  const duration = typeof seconds === "number" ? seconds : fallbackSeconds;
+  return new Date(Date.parse(timestamp) + duration * 1_000).toISOString();
+}
+
 export function projectWorld(events: WorldEvent[]): WorldSnapshot {
   const state = events.reduce<WorldSnapshot>((snapshot, event) => {
     snapshot.world.version = event.version;
@@ -39,12 +45,42 @@ export function projectWorld(events: WorldEvent[]): WorldSnapshot {
 
     switch (event.type) {
       case "agent.joined": {
-        const agent = event.payload.agent as Agent;
+        const joinedAgent = event.payload.agent as Agent;
+        const agent = typeof event.payload.presenceLeaseSeconds === "number"
+          ? {
+              ...joinedAgent,
+              lastHeartbeatAt: event.timestamp,
+              presenceExpiresAt: deadlineFrom(event.timestamp, event.payload.presenceLeaseSeconds),
+            }
+          : joinedAgent;
         if (!snapshot.agents.some((candidate) => candidate.id === agent.id)) snapshot.agents.push(agent);
         break;
       }
       case "agent.introduced":
         snapshot.agents = replaceAgent(snapshot.agents, event.actorAgentId ?? "", {
+          currentActivity: event.summary,
+        });
+        break;
+      case "agent.heartbeat": {
+        snapshot.agents = replaceAgent(snapshot.agents, event.actorAgentId ?? "", {
+          status: event.payload.status as Agent["status"],
+          currentActivity: event.summary,
+          lastHeartbeatAt: event.timestamp,
+          presenceExpiresAt: deadlineFrom(event.timestamp, event.payload.presenceLeaseSeconds),
+        });
+        const activeMissionId = typeof event.payload.activeMissionId === "string"
+          ? event.payload.activeMissionId
+          : null;
+        if (activeMissionId) {
+          snapshot.missions = replaceMission(snapshot.missions, activeMissionId, {
+            leaseExpiresAt: deadlineFrom(event.timestamp, event.payload.missionLeaseSeconds),
+          });
+        }
+        break;
+      }
+      case "agent.offline":
+        snapshot.agents = replaceAgent(snapshot.agents, event.targetId, {
+          status: "offline",
           currentActivity: event.summary,
         });
         break;
@@ -89,15 +125,24 @@ export function projectWorld(events: WorldEvent[]): WorldSnapshot {
         snapshot.missions = replaceMission(snapshot.missions, event.targetId, {
           ownerAgentId: event.actorAgentId ?? undefined,
           status: "claimed",
+          leaseExpiresAt: deadlineFrom(event.timestamp, event.payload.leaseSeconds, DEFAULT_MISSION_LEASE_SECONDS),
         });
         snapshot.agents = replaceAgent(snapshot.agents, event.actorAgentId ?? "", {
           status: "working",
           currentActivity: event.summary,
         });
         break;
+      case "mission.lease_expired":
+        snapshot.missions = replaceMission(snapshot.missions, event.targetId, {
+          ownerAgentId: undefined,
+          leaseExpiresAt: undefined,
+          status: "available",
+        });
+        break;
       case "contribution.submitted":
         snapshot.missions = replaceMission(snapshot.missions, event.targetId, {
           status: "submitted",
+          leaseExpiresAt: undefined,
           contributionCommit: String(event.payload.commit),
         });
         break;

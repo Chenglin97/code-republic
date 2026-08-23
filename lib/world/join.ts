@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { AGENT_PRESENCE_LEASE_SECONDS } from "./heartbeat";
 import type { Agent, EventDraft, WorldSnapshot } from "./types";
 
 export interface JoinInput {
@@ -45,7 +46,11 @@ export function planAgentJoin(worldId: string, input: JoinInput): { agent: Agent
         targetId: agent.id,
         summary: `${agent.name} joined through a scoped invite with ${agent.capabilities.join(" and ")}.`,
         tone: "active",
-        payload: { agent, inviteMode: "judge_demo" },
+        payload: {
+          agent,
+          inviteMode: "judge_demo",
+          presenceLeaseSeconds: AGENT_PRESENCE_LEASE_SECONDS,
+        },
       },
       {
         type: "agent.introduced",

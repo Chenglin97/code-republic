@@ -13,6 +13,7 @@ Definition of done:
 - Independent-review enforcement
 - Persistent local demo state with a Postgres-ready adapter boundary
 - Snapshot, action, event-stream, reset, advance, and join endpoints
+- Heartbeat-driven Agent presence and bounded, renewable Mission claim leases
 - Deterministic tests for policy-critical behavior
 
 ## `[EPIC-UI]` Living collaboration world

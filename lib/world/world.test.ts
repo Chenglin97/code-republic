@@ -117,6 +117,22 @@ describe("World rules", () => {
       summary: "Sofia attempts to claim the adapter Mission.",
     })).toThrowError(/join the Crew/);
   });
+
+  it("bounds requested Mission leases", () => {
+    let events = createSeedEvents();
+    events = append(events, nextDemoDrafts(projectWorld(events)));
+    events = append(events, nextDemoDrafts(projectWorld(events)));
+    const snapshot = projectWorld(events);
+    expect(() => decideAction(snapshot, {
+      type: "mission.claim",
+      actorAgentId: "agt_tony",
+      targetId: "msn_contract",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "test:oversized-lease",
+      summary: "Tony requests an unbounded claim.",
+      payload: { leaseSeconds: 3_600 },
+    })).toThrowError(/between 20 and 300/);
+  });
 });
 
 describe("World authority", () => {
@@ -200,6 +216,80 @@ describe("World authority", () => {
     corrupt[1] = { ...corrupt[1]!, version: 8 };
     expect(() => validateEventLog("demo", corrupt)).toThrow(/expected 2/);
   });
+
+  it("renews presence and one owned Mission lease, then expires each deadline explicitly", async () => {
+    let now = new Date("2026-08-23T21:00:00.000Z");
+    const authority = new WorldAuthority(new MemoryStorage(), undefined, () => now);
+    let snapshot = await authority.getSnapshot("demo");
+    await authority.appendDrafts("demo", nextDemoDrafts(snapshot), { expectedWorldVersion: snapshot.world.version });
+    snapshot = await authority.getSnapshot("demo");
+    await authority.appendDrafts("demo", nextDemoDrafts(snapshot), { expectedWorldVersion: snapshot.world.version });
+    snapshot = await authority.getSnapshot("demo");
+
+    const claim = await authority.submitAction("demo", {
+      type: "mission.claim",
+      actorAgentId: "agt_tony",
+      targetId: "msn_contract",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "lease:tony:contract",
+      summary: "Tony claims the contract Mission with a bounded lease.",
+      payload: { leaseSeconds: 20 },
+    });
+    expect(claim.snapshot.missions.find((mission) => mission.id === "msn_contract")?.leaseExpiresAt)
+      .toBe("2026-08-23T21:00:20.000Z");
+
+    now = new Date("2026-08-23T21:00:10.000Z");
+    const heartbeat = await authority.heartbeatAgent("demo", "agt_tony", {
+      expectedWorldVersion: claim.worldVersion,
+      idempotencyKey: "heartbeat:tony:1",
+      lastObservedWorldVersion: claim.worldVersion,
+      status: "working",
+      activeMissionId: "msn_contract",
+    });
+    expect(heartbeat.snapshot.agents.find((agent) => agent.id === "agt_tony")?.presenceExpiresAt)
+      .toBe("2026-08-23T21:00:50.000Z");
+    expect(heartbeat.snapshot.missions.find((mission) => mission.id === "msn_contract")?.leaseExpiresAt)
+      .toBe("2026-08-23T21:01:10.000Z");
+
+    now = new Date("2026-08-23T21:00:51.000Z");
+    snapshot = await authority.getSnapshot("demo");
+    expect(snapshot.agents.find((agent) => agent.id === "agt_tony")?.status).toBe("offline");
+    expect(snapshot.missions.find((mission) => mission.id === "msn_contract")?.status).toBe("claimed");
+
+    now = new Date("2026-08-23T21:01:11.000Z");
+    snapshot = await authority.getSnapshot("demo");
+    const mission = snapshot.missions.find((candidate) => candidate.id === "msn_contract");
+    expect(mission).toMatchObject({ status: "available" });
+    expect(mission?.ownerAgentId).toBeUndefined();
+    expect(mission?.leaseExpiresAt).toBeUndefined();
+    expect(snapshot.recentEvents.slice(0, 2).map((event) => event.type))
+      .toEqual(["mission.lease_expired", "agent.offline"]);
+  });
+
+  it("does not let one Agent renew another Agent's Mission lease", async () => {
+    const authority = new WorldAuthority(new MemoryStorage());
+    let snapshot = await authority.getSnapshot("demo");
+    await authority.appendDrafts("demo", nextDemoDrafts(snapshot), { expectedWorldVersion: snapshot.world.version });
+    snapshot = await authority.getSnapshot("demo");
+    await authority.appendDrafts("demo", nextDemoDrafts(snapshot), { expectedWorldVersion: snapshot.world.version });
+    snapshot = await authority.getSnapshot("demo");
+    const claim = await authority.submitAction("demo", {
+      type: "mission.claim",
+      actorAgentId: "agt_tony",
+      targetId: "msn_contract",
+      expectedWorldVersion: snapshot.world.version,
+      idempotencyKey: "lease:owner:tony",
+      summary: "Tony claims the contract Mission.",
+    });
+
+    await expect(authority.heartbeatAgent("demo", "agt_maya", {
+      expectedWorldVersion: claim.worldVersion,
+      idempotencyKey: "heartbeat:maya:wrong-mission",
+      lastObservedWorldVersion: claim.worldVersion,
+      status: "working",
+      activeMissionId: "msn_contract",
+    })).rejects.toMatchObject({ code: "MISSION_LEASE_NOT_OWNED", status: 409 });
+  });
 });
 
 describe("Agent join", () => {
@@ -214,5 +304,6 @@ describe("Agent join", () => {
     expect(retry.agent.id).toBe(first.agent.id);
     expect(first.drafts.map((draft) => draft.type)).toEqual(["agent.joined", "agent.introduced"]);
     expect(first.drafts.some((draft) => draft.type === "release.reviewed")).toBe(false);
+    expect(first.drafts[0]?.payload.presenceLeaseSeconds).toBe(40);
   });
 });
