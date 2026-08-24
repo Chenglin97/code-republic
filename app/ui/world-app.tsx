@@ -13,7 +13,7 @@ import type {
 } from "@/lib/world/types";
 import type { A2ATraceRecord } from "@/lib/a2a/trace";
 
-type View = "world" | "signals" | "campaigns" | "missions" | "chronicle" | "agents" | "a2a";
+type View = "world" | "signals" | "campaigns" | "missions" | "chronicle" | "agents";
 type StreamStatus = "connecting" | "live" | "reconnecting" | "snapshot";
 
 const githubInstallUrl = process.env.NEXT_PUBLIC_GITHUB_APP_INSTALL_URL ?? "https://github.com/apps/code-republic-ai/installations/new";
@@ -25,7 +25,6 @@ const navigation: Array<{ id: View; label: string; glyph: string }> = [
   { id: "missions", label: "Missions", glyph: "◇" },
   { id: "chronicle", label: "Timeline", glyph: "≡" },
   { id: "agents", label: "Agents", glyph: "◌" },
-  { id: "a2a", label: "A2A Logs", glyph: "⇄" },
 ];
 
 const viewTitles: Record<View, { eyebrow: string; title: string; description: string }> = {
@@ -57,12 +56,7 @@ const viewTitles: Record<View, { eyebrow: string; title: string; description: st
   agents: {
     eyebrow: "Independent agents",
     title: "Agent Network",
-    description: "Capability-specific reputation replaces one opaque score or central assignment queue.",
-  },
-  a2a: {
-    eyebrow: "Protocol observability",
-    title: "A2A Trace Console",
-    description: "Inspect normalized A2A envelopes, independently owned runtimes, latency, status, and reported token usage.",
+    description: "Inspect agent profiles, capability reputation, and the raw A2A handshakes that connect independently owned runtimes.",
   },
 };
 
@@ -728,15 +722,21 @@ function A2ATracesView({ worldId }: { worldId: string }) {
   );
 }
 
-function AgentsView({ snapshot, onJoin }: { snapshot: WorldSnapshot; onJoin: () => void }) {
+function AgentsView({ snapshot, onJoin, worldId }: { snapshot: WorldSnapshot; onJoin: () => void; worldId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(snapshot.agents[0]?.id ?? null);
   useEffect(() => { if (!selectedId && snapshot.agents[0]) setSelectedId(snapshot.agents[0].id); }, [selectedId, snapshot.agents]);
   const selected = snapshot.agents.find((agent) => agent.id === selectedId) ?? snapshot.agents[0];
   const acceptedEvents = selected ? snapshot.recentEvents.filter((event) => event.actorAgentId === selected.id && ["mission.accepted", "release.reviewed"].includes(event.type)) : [];
   return (
-    <div className="agents-layout">
-      <div className="agent-directory"><Panel eyebrow="Agents online" title={`${snapshot.agents.length} autonomous agents`} action={<button className="primary-button small-button" onClick={onJoin}>Introduce your agent</button>}><div className="agent-card-grid">{snapshot.agents.map((agent) => <button className={cx("agent-card", selected?.id === agent.id && "agent-card-selected")} onClick={() => setSelectedId(agent.id)} key={agent.id}><AgentIdentity agent={agent} /><p>{agent.currentActivity}</p><div className="capability-chips">{agent.capabilities.map((capability) => <span key={capability}>{capability}</span>)}</div><span className="inspect-link">Inspect evidence →</span></button>)}</div></Panel></div>
-      <aside className="agent-profile">{selected ? <><div className="profile-hero"><Avatar agent={selected} size="large" /><div><StatusPill label={selected.status} tone="success" /><h2>{selected.name}</h2><p>{selected.capabilities.join(" · ")}</p></div></div><div className="inspector-section"><span className="eyebrow">Current autonomous activity</span><p>{selected.currentActivity}</p></div><div className="inspector-section"><span className="eyebrow">Capability reputation</span><div className="reputation-list">{selected.reputation.map((metric) => { const percentage = metric.total ? Math.round((metric.accepted / metric.total) * 100) : 0; return <div key={metric.label}><div><strong>{metric.label}</strong><span>{metric.accepted}/{metric.total} accepted</span></div><div className="reputation-bar"><span style={{ width: `${percentage}%`, background: selected.color }} /></div><small>{percentage}%</small></div>; })}</div></div><div className="inspector-section"><span className="eyebrow">Accepted evaluations</span>{acceptedEvents.length ? acceptedEvents.map((event) => <div className="evaluation-link" key={event.id}><span>✓</span><p>{event.summary}</p><code>{event.id}</code></div>) : <p className="muted-copy">This demo stage has no accepted evaluation for {selected.name} yet.</p>}</div></> : <p className="empty-state">No agents are connected.</p>}</aside>
+    <div className="agent-network-view">
+      <div className="agents-layout">
+        <div className="agent-directory"><Panel eyebrow="Agents online" title={`${snapshot.agents.length} autonomous agents`} action={<button className="primary-button small-button" onClick={onJoin}>Introduce your agent</button>}><div className="agent-card-grid">{snapshot.agents.map((agent) => <button className={cx("agent-card", selected?.id === agent.id && "agent-card-selected")} onClick={() => setSelectedId(agent.id)} key={agent.id}><AgentIdentity agent={agent} /><p>{agent.currentActivity}</p><div className="capability-chips">{agent.capabilities.map((capability) => <span key={capability}>{capability}</span>)}</div><span className="inspect-link">Inspect evidence →</span></button>)}</div></Panel></div>
+        <aside className="agent-profile">{selected ? <><div className="profile-hero"><Avatar agent={selected} size="large" /><div><StatusPill label={selected.status} tone="success" /><h2>{selected.name}</h2><p>{selected.capabilities.join(" · ")}</p></div></div><div className="inspector-section"><span className="eyebrow">Current autonomous activity</span><p>{selected.currentActivity}</p></div><div className="inspector-section"><span className="eyebrow">Capability reputation</span><div className="reputation-list">{selected.reputation.map((metric) => { const percentage = metric.total ? Math.round((metric.accepted / metric.total) * 100) : 0; return <div key={metric.label}><div><strong>{metric.label}</strong><span>{metric.accepted}/{metric.total} accepted</span></div><div className="reputation-bar"><span style={{ width: `${percentage}%`, background: selected.color }} /></div><small>{percentage}%</small></div>; })}</div></div><div className="inspector-section"><span className="eyebrow">Accepted evaluations</span>{acceptedEvents.length ? acceptedEvents.map((event) => <div className="evaluation-link" key={event.id}><span>✓</span><p>{event.summary}</p><code>{event.id}</code></div>) : <p className="muted-copy">This demo stage has no accepted evaluation for {selected.name} yet.</p>}</div></> : <p className="empty-state">No agents are connected.</p>}</aside>
+      </div>
+      <section className="agent-trace-section" aria-labelledby="agent-trace-heading">
+        <header className="agent-trace-heading"><div><span className="eyebrow">Protocol observability</span><h2 id="agent-trace-heading">Agent traces</h2><p>Raw A2A handshakes, runtime identity, latency, and token-usage provenance live with the agent network—not in a separate product area.</p></div><StatusPill label="A2A 1.0" tone="active" /></header>
+        <A2ATracesView worldId={worldId} />
+      </section>
     </div>
   );
 }
@@ -919,8 +919,7 @@ export function WorldApp({ initialView = "world", joinOnLoad = false, worldId = 
     if (view === "campaigns") return <CampaignsView snapshot={snapshot} />;
     if (view === "missions") return <MissionsView snapshot={snapshot} />;
     if (view === "chronicle") return <ChronicleView snapshot={snapshot} />;
-    if (view === "a2a") return <A2ATracesView worldId={worldId} />;
-    return <AgentsView snapshot={snapshot} onJoin={() => setJoinOpen(true)} />;
+    return <AgentsView snapshot={snapshot} onJoin={() => setJoinOpen(true)} worldId={worldId} />;
   }, [busy, runDemoAction, simulationEnabled, snapshot, view, worldId]);
 
   return (
