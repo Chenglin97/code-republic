@@ -1,4 +1,10 @@
 # Code Republic
+Live website link:
+https://code-republic-ai.chenglinwei.chatgpt.site/?world=gh_chenglin97_json_server_2_1bu5u45
+
+
+Demo video link:
+https://www.youtube.com/watch?v=0kOsIm0aMcs
 
 ![Code Republic world overview](designs/01-world-overview.png)
 
